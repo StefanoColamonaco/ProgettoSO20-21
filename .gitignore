@@ -3,3 +3,5 @@
 *.o
 *.h.ghc
 *.h
+*.out
+*.exe
