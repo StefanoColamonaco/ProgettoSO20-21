@@ -1,8 +1,20 @@
+#include "pandos_types.h"
+#include "pandos_const.h"
+
+/* Pointer to list of free pcbs*/
+pcb_PTR pcbFree_h;
+
+/*Table of free pcbs*/
+pcb_t pcbFree_table[MAX_PROC];
+
+/* Fills pcbFree_h list */
+void initPcbs();
+
 #include "pandos_const.h"
 #include "pandos_types.h"
 #include <stdio.h>
 
-pcb_t *pcbFree_h;               //unused PCBs list
+pcb_PTR pcbFree_h;               //unused PCBs list
 pcb_t pcbFree_table[MAXPROC];    //PCB array
 
 void initPcbs() {
