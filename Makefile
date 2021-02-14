@@ -31,7 +31,3 @@ crtso.o : crtso.S
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 
-
-.PHONY: clean
-clean:
-	rm crtso.o libumps.o kernel $(objects)

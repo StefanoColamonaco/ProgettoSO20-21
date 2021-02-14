@@ -1,22 +1,25 @@
+#ifndef PROGETTOSO20_21_PCB_H
+#define PROGETTOSO20_21_PCB_H
+
+
 #include "pandos_types.h"
 #include "pandos_const.h"
 
+
 /* Pointer to list of free pcbs*/
-pcb_PTR pcbFree_h;
+extern pcb_PTR pcbFree_h;
+
 
 /*Table of free pcbs*/
-pcb_t pcbFree_table[MAX_PROC];
+extern pcb_t pcbFree_table[MAXPROC];
+
+
 
 /* Fills pcbFree_h list */
 void initPcbs();
 
-#include "pandos_const.h"
-#include "pandos_types.h"
-#include <stdio.h>
 
-pcb_PTR pcbFree_h;               //unused PCBs list
-pcb_t pcbFree_table[MAXPROC];    //PCB array
-
+/*
 void initPcbs() {
     pcb_t *sentinel, *tmp;
     pcbFree_h = sentinel;
@@ -32,3 +35,7 @@ void initPcbs() {
     *tmp = pcbFree_table[0];
     *tmp->p_prev = pcbFree_table[MAXPROC-1];
 }
+*/
+
+
+#endif //PROGETTOSO20_21_PCB_H
