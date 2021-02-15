@@ -67,4 +67,55 @@ int emptyProcQ(pcb_t *tp) {
 }
 
 
-void insertProcQ(pcb_t **tp, pcb_t *p);                              /* Insert PCB p at the end of tp list */
+/* Insert PCB p at the end of tp list */
+
+void insertProcQ(pcb_t **tp, pcb_t *p) { //todo test
+    p->p_prev = *tp;
+    p->p_next = (*tp)->p_next;
+
+    (*tp)->p_next = p;
+    p->p_next->p_prev = p;
+
+    tp = &p;
+
+}
+
+
+/* Return the element at the end of tp ( NULL otherwise ) */
+
+pcb_t *headProcQ(pcb_t **tp) { //todo test
+    if (emptyProcQ(*tp)) return NULL;
+    return (*tp)->p_next;
+}
+
+
+/* Removes oldest element from tp and return a pointer */
+
+pcb_t *removeProcQ(pcb_t **tp) { //todo test
+    pcb_t *toReturn = headProcQ(tp);
+    if (toReturn != NULL) {
+        toReturn->p_next->p_prev = toReturn->p_prev;
+        toReturn->p_prev->p_next = toReturn->p_next;
+    }
+    return toReturn;
+}
+
+
+/* Removes PCB p from tp list ( return NULL otherwise ) */
+
+pcb_t *outProcQ(pcb_t **tp, pcb_t *p) { //todo test, and possibly rewrite
+    if (emptyProcQ(*tp))
+        return NULL;
+
+    pcb_t *iter = *tp;
+    do {
+        if (iter == p) {
+            p->p_prev->p_next = p->p_next;
+            p->p_next->p_prev = p->p_prev;
+            return iter;
+        }
+        iter = iter->p_next;
+    } while (iter != *tp);
+
+    return NULL;
+}
