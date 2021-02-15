@@ -11,12 +11,22 @@
 
 int main() {
     initPcbs();
+    pcb_PTR p = allocPcb();
+
     pcb_PTR iter = pcbFree_h;
     int i = 0;
     do {
         i++;
         iter = iter->p_next;
     } while (iter != pcbFree_h);
-    printf("i = %d /n MAXPROC = %d", i, MAXPROC);
+    printf("Available processes: %d", i);
+
+    freePcb(p);
+    i = 0;
+    do {
+        i++;
+        iter = iter->p_next;
+    } while (iter != pcbFree_h);
+    printf("Available processes: %d", i);
 }
 

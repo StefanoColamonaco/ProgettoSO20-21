@@ -30,7 +30,7 @@ pcb_t *headProcQ(pcb_t **tp);                                       /* Return th
 pcb_t* removeProcQ(pcb_t **tp);                                     /* Removes oldest element from tp and return a pointer */
 pcb_t* outProcQ(pcb_t **tp, pcb_t*p);                               /* Removes PCB p from tp list ( return NULL otherwise ) */
 
-/* PCB threes */
+/* PCB trees */
 
 int emptyChild(pcb_t *p);                                           /* Returns TRUE if p has no childrens, FALSE otherwise */
 void insertChild(pcb_t*prnt,pcb_t *p);                              /* Insert p as child of prnt  */
