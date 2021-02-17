@@ -60,7 +60,7 @@ pcb_t *mkEmptyProcQ() {
 /* Returns TRUE if the list is empty, FALSE otherwise */
 
 int emptyProcQ(pcb_t *tp) {
-    if (pcbFree_h == NULL)
+    if (tp == NULL)
         return TRUE;
     else
         return FALSE;
@@ -69,31 +69,34 @@ int emptyProcQ(pcb_t *tp) {
 
 /* Insert PCB p at the end of tp list */
 
-void insertProcQ(pcb_t **tp, pcb_t *p) { //todo test
-    p->p_prev = *tp;
-    p->p_next = (*tp)->p_next;
+void insertProcQ(pcb_t **tp, pcb_t *p) {
+    if (emptyProcQ(*tp)) {
+        p->p_prev = p->p_next = p;
+    } else {
+        p->p_prev = *tp;
+        p->p_next = (*tp)->p_next;
 
-    (*tp)->p_next = p;
-    p->p_next->p_prev = p;
-
-    tp = &p;
-
+        (*tp)->p_next = p;
+        p->p_next->p_prev = p;
+    }
+    *tp = p;
 }
 
 
 /* Return the element at the end of tp ( NULL otherwise ) */
 
-pcb_t *headProcQ(pcb_t **tp) { //todo test
-    if (emptyProcQ(*tp)) return NULL;
-    return (*tp)->p_next;
+pcb_t *headProcQ(pcb_t *tp) {
+    if (emptyProcQ(tp)) return NULL;
+    else return tp->p_next;
 }
 
 
 /* Removes oldest element from tp and return a pointer */
 
-pcb_t *removeProcQ(pcb_t **tp) { //todo test
-    pcb_t *toReturn = headProcQ(tp);
-    if (toReturn != NULL) {
+pcb_t *removeProcQ(pcb_t **tp) {
+    pcb_t *toReturn = NULL;
+    if ((toReturn = headProcQ(*tp))) {
+        *tp = (*tp)->p_next;
         toReturn->p_next->p_prev = toReturn->p_prev;
         toReturn->p_prev->p_next = toReturn->p_next;
     }
@@ -107,15 +110,15 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p) { //todo test, and possibly rewrite
     if (emptyProcQ(*tp))
         return NULL;
 
+    pcb_t *toReturn = NULL;
     pcb_t *iter = *tp;
     do {
         if (iter == p) {
-            p->p_prev->p_next = p->p_next;
-            p->p_next->p_prev = p->p_prev;
-            return iter;
+            toReturn = removeProcQ(&iter);
+            break;
         }
         iter = iter->p_next;
     } while (iter != *tp);
 
-    return NULL;
+    return toReturn;
 }
