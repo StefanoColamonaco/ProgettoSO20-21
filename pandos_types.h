@@ -31,5 +31,16 @@ typedef struct pcb_t {
     /* add more fields here */
 
 }  pcb_t, *pcb_PTR;
+
+/* semaphore type */
+typedef struct semd_t {
+        
+ struct semd_t *s_next;         /* ptr to next element on queue */
+
+ int *s_semAdd;                 /* ptr to the semaphore */                 
+
+ pcb_PTRs_procQ;                /* ptr to tail of the queue of procs. blocked on this sem. */
+
+} semd_t, *semd_PTR;
 	
 #endif
