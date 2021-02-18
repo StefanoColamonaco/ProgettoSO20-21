@@ -20,9 +20,9 @@ int main() {
     insertProcQ(&tp, p);
     insertProcQ(&tp, p1);
     insertProcQ(&tp, p2);
-
+/*
     if (outProcQ(&tp, p1) == p1)
-        printf("outProcQ ha cancellato p1");
+        printf("outProcQ ha cancellato p1\n");
 
     if (headProcQ(tp) == p)
         printf("p è l'head\n");
@@ -36,12 +36,38 @@ int main() {
         printf("p1 è l'head\n");
     }
 
+    if (removeProcQ(&tp) == p2)
+        printf("p2 rimosso correttamente\n");
+    else
+        printf("processo sbagliato rimosso\n");
+
+    if (outProcQ(&tp, p1) == p1)
+        printf("outProcQ ha cancellato p1\n");
+    else 
+        printf("Non è stato possibile cancellare p1 poichè non presente nella lista\n");
+
+    if (emptyProcQ(tp)) {
+        printf("Queue is empty\n");
+    } else {
+        printf("Queue NOT empty\n");
+    }
+*/
+    if (removeProcQ(&tp) == p)
+        printf("p rimosso correttamente\n");
+    else
+        printf("processo sbagliato rimosso\n");
+    
     if (removeProcQ(&tp) == p1)
         printf("p1 rimosso correttamente\n");
     else
         printf("processo sbagliato rimosso\n");
 
-    if (emptyProcQ(tp)) {
+    if (removeProcQ(&tp) == p2)
+        printf("p2 rimosso correttamente\n");
+    else
+        printf("processo sbagliato rimosso\n");
+        
+     if (emptyProcQ(tp)) {
         printf("Queue is empty\n");
     } else {
         printf("Queue NOT empty\n");

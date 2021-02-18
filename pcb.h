@@ -23,7 +23,7 @@ pcb_PTR allocPcb();                                                  /* PCB allo
 /* PCB list */
 
 pcb_PTR mkEmptyProcQ();                                              /* Make an empty PCB list */
-intemptyProcQ(pcb_t *tp);                                          /* Returns TRUE if the list is empty, FALSE otherwise */
+int emptyProcQ(pcb_t *tp);                                          /* Returns TRUE if the list is empty, FALSE otherwise */
 void insertProcQ(pcb_t **tp, pcb_t *p);                              /* Insert PCB p at the end of tp list */
 pcb_PTR headProcQ(pcb_t *tp);                                       /* Return the element at the end of tp ( NULL otherwise ) */
 pcb_PTR removeProcQ(pcb_t **tp);                                     /* Removes oldest element from tp and return a pointer */

@@ -94,31 +94,41 @@ pcb_t *headProcQ(pcb_t *tp) {
 /* Removes oldest element from tp and return a pointer */
 
 pcb_t *removeProcQ(pcb_t **tp) {
-    pcb_t *toReturn = NULL;
-    if ((toReturn = headProcQ(*tp))) {
-        *tp = (*tp)->p_next;
-        toReturn->p_next->p_prev = toReturn->p_prev;
-        toReturn->p_prev->p_next = toReturn->p_next;
+    if(emptyProcQ(*tp))
+        return NULL;
+    if(headProcQ(*tp) == (*tp)) {
+      pcb_t *temp = (*tp) -> p_next;
+      temp -> p_prev -> p_next = temp -> p_next;
+      *tp = NULL;
+      return temp;
     }
-    return toReturn;
+    pcb_t *temp = (*tp) -> p_next;
+    (*tp) -> p_next = temp -> p_next;
+    temp -> p_next -> p_prev = *tp;
+    temp -> p_prev = temp -> p_next = NULL;
+    return temp;
+
 }
 
 
 /* Removes PCB p from tp list ( return NULL otherwise ) */
 
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p) { //todo test, and possibly rewrite
-    if (emptyProcQ(*tp))
+    if(emptyProcQ((*tp)))
         return NULL;
-
-    pcb_t *toReturn = NULL;
-    pcb_t *iter = *tp;
-    do {
-        if (iter == p) {
-            toReturn = removeProcQ(&iter);
-            break;
+    if((*tp) == p)
+        return removeProcQ(tp);
+    pcb_t *tpTemp = (*tp);
+    while(tpTemp -> p_next != (*tp)){
+        if(tpTemp -> p_next == p){
+            pcb_t *temp = p;
+            temp -> p_next -> p_prev = temp -> p_prev;
+            temp -> p_prev -> p_next = temp -> p_next;
+            temp -> p_prev = temp -> p_next = NULL;
+            return temp;
+        } else {
+            tpTemp = tpTemp -> p_next;
         }
-        iter = iter->p_next;
-    } while (iter != *tp);
-
-    return toReturn;
+    }
+  return NULL;
 }
