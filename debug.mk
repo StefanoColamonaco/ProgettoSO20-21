@@ -1,16 +1,20 @@
 CC = gcc
 
 CFLAGS = -I/usr/share/include -g -Wall -O0
-objects = main.o pcb.o
+objects = pcb.o
 
-.PHONY: clean run
+.PHONY: clean run debug
 
-exec: $(objects)
+exec: main.o $(objects)
 	$(CC) $(CFLAGS) -o $@ $^
+
+p1test : p1test.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 
 pcb.o : pcb.c
 main.o : main.c
-
+p1test.o : p1test.c
 
 clean:
 	rm exec $(objects)
