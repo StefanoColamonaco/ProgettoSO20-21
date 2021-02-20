@@ -93,7 +93,7 @@ int insertBlocked(int *semAdd, pcb_t *p){
         return FALSE;
     } else {                                   //we need to allocate a semaphore
         semd_t *newSem = newSemd();
-        if((newSem == NULL))                  
+        if(newSem == NULL)
             return TRUE;
 
         semd_t *tmp_allocated = findSemInActiveList(semAdd);

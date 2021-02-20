@@ -4,7 +4,7 @@ CC = mipsel-linux-gnu-gcc
 
 umps_flags = -ffreestanding -ansi -mips1 -mabi=32 -mno-gpopt -G 0 -mno-abicalls -fno-pic -mfp32
 umps_headers = -I/usr/include/umps3 -I/usr/include -I/usr/share/include -I/usr/share/include/umps3 -I/usr/local/include/umps3/ -I.
-compile_flags = -std=c17 -Wall -O0
+compile_flags = -std=c11 -Wall -O0
 CFLAGS = $(umps_flags) $(compile_flags) $(umps_headers)
 
 LD = mipsel-linux-gnu-ld

@@ -138,22 +138,7 @@ pcb_t *headProcQ(pcb_t *tp) {
 
 /* Removes oldest element from tp and return a pointer */
 
-/*pcb_t *removeProcQ(pcb_t **tp) {
-    if (emptyProcQ(*tp))
-        return NULL;
-    if (headProcQ(*tp) == (*tp)) {
-      pcb_t *tmp = (*tp) -> p_next;
-      tmp -> p_prev -> p_next = tmp -> p_next;
-      *tp = NULL;
-    } else {
-        pcb_t *tmp = (*tp) -> p_next;
-        (*tp) -> p_next = tmp -> p_next;
-        tmp -> p_next -> p_prev = *tp;
-        tmp -> p_prev = tmp -> p_next = NULL;
-    }
-    return tmp;
 
-}*/
 
 pcb_t *removeProcQ(pcb_t **tp) {
     if (emptyProcQ(*tp))
@@ -196,48 +181,14 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {         //todo refactor to remove repeat
     return NULL;
 }
 
-/*
-pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {
-    if(emptyProcQ((*tp)))
-        return NULL;
-    if((*tp) == p)
-        return removeProcQ(tp);
-    pcb_t *tpTmp = (*tp);
-    while(tpTmp -> p_next != (*tp)){    //qua non possiamo usare removeProcQ?
-        if(tpTmp -> p_next == p){
-            pcb_t *tmp = p;     //tmp possiamo toglierlo, volendo
-            tmp -> p_next -> p_prev = tmp -> p_prev;
-            tmp -> p_prev -> p_next = tmp -> p_next;
-            tmp -> p_prev = tmp -> p_next = NULL;
-            return tmp;
-        } else {
-            tpTmp = tpTmp -> p_next;
-        }
-    }
-    return NULL;
-}
-*/
 
 /* Returns TRUE if p has no childrens, FALSE otherwise */
 
 int emptyChild(pcb_t *p) {
-    return (p->p_child == NULL);
+    return p->p_child == NULL;
 }
 
 /* Insert p as child of prnt  */
-
-/*void insertChild(pcb_t *prnt, pcb_t *p){
-    p -> p_prnt = prnt;
-    p -> p_prev_sib = NULL;
-    if (emptyChild(prnt)) {
-        p -> p_next_sib = NULL;
-    } else {
-        p->p_next_sib = prnt->p_child;
-        prnt->p_child->p_prev_sib = p;
-    }
-    prnt -> p_child = p;
-}*/
-
 /* function is O(n) because the list is required to be NULL terminated and we only have a head-pointer */
 void insertChild(pcb_t *prnt, pcb_t *p) {
     p->p_prnt = prnt;
@@ -247,8 +198,8 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
         p->p_prev_sib = NULL;
     } else {
         pcb_t *iter = prnt->p_child;
-        while (iter->p_next != NULL) {
-            iter = iter->p_next;
+        while (iter->p_next_sib != NULL) {
+            iter = iter->p_next_sib;
         }
         iter->p_next_sib = p;
         p->p_prev_sib = iter;
@@ -258,28 +209,6 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
 
 /* Removes first child of p and returns it ( return NULL otherwise ) */
 
-/*
-pcb_t *removeChild(pcb_t *p){
-  if(emptyChild(p))
-    return NULL;
-
-  //pcb_PTR child = p->p_child;
-
-  if(p -> p_child -> p_prev_sib == NULL){
-    pcb_t *tmp = p -> p_child;
-    p -> p_child = NULL;
-    return tmp;
-  }
-  pcb_t *tmp = p -> p_child;
-  tmp -> p_prev_sib -> p_next_sib = NULL;
-  tmp -> p_prnt -> p_child = tmp -> p_prev_sib;
-  tmp -> p_prnt = NULL;
-  tmp -> p_prev_sib = NULL;
-  tmp -> p_prnt = NULL;
-  tmp -> p_prev_sib = NULL;
-  return tmp;
-}
-*/
 
 pcb_t *removeChild(pcb_t *p) {
     if (emptyChild(p))
@@ -292,30 +221,6 @@ pcb_t *removeChild(pcb_t *p) {
 
     return child;
 }
-
-/* Removes P from the father's children */
-
-/*pcb_t *outChild(pcb_t *p){
-  if(p -> p_prnt == NULL)
-    return NULL;
-
-  if(p -> p_prnt -> p_child == p)
-    return removeChild(p -> p_prnt);
-  
-  if(p -> p_prev_sib == NULL){
-    p -> p_next_sib -> p_prev_sib = NULL;
-    p -> p_next_sib = NULL;
-    p -> p_prnt = NULL;
-    return p;
-  }
-  pcb_t *tmp = p;
-  p -> p_next_sib -> p_prev_sib = p -> p_prev_sib;
-  p -> p_prev_sib -> p_next_sib = p -> p_next_sib;
-  p -> p_next_sib = NULL;
-  p -> p_prev_sib = NULL;
-  p -> p_prnt = NULL;
-  return tmp;
-}*/
 
 pcb_t *outChild(pcb_t *p) {
     if (p->p_prnt == NULL)
