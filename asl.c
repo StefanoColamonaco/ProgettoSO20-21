@@ -28,7 +28,7 @@ void initASL(){
     lowerLimit -> s_semAdd = 0;
     upperLimit -> s_next = NULL;
     upperLimit -> s_procQ = mkEmptyProcQ();
-    upperLimit -> s_semAdd = 0x7FFFFFFF;         //0x7FFFFFFF is a bitmask for 'max'
+    upperLimit -> s_semAdd = MAXADD;         //0x7FFFFFFF is a bitmask for 'max'
 
     semd_h = lowerLimit;
 
@@ -49,7 +49,7 @@ void initASL(){
 semd_t *findSemInActiveList(int *semAdd){
   semd_t *tmp = semd_h;
   
-  while(tmp -> s_next -> s_semAdd < semAdd) tmp = tmp -> s_next;
+  while(tmp -> s_next -> s_semAdd < semAdd && tmp -> s_next -> s_semAdd != MAXADD) tmp = tmp -> s_next;
   return tmp;
 }
 
@@ -111,12 +111,11 @@ int insertBlocked(int *semAdd, pcb_t *p){
 
 pcb_t *removeBlocked(int *semAdd){
     semd_t *tmp = findSemInActiveList(semAdd);
-    tmp = tmp -> s_next;
-    if(tmp -> s_semAdd == semAdd){
-        pcb_t *removed = removeProcQ(&tmp -> s_procQ);
-        if(emptyProcQ(tmp -> s_procQ)){                 //if the process queue is empty the semaphore is freed
-            semd_t *tmp_emptyProcQueue = tmp;
-            tmp = tmp_emptyProcQueue -> s_next;
+    if(tmp -> s_next -> s_semAdd == semAdd){
+        pcb_t *removed = removeProcQ(&tmp -> s_next -> s_procQ);
+        if(emptyProcQ(tmp -> s_next -> s_procQ)){                 //if the process queue is empty the semaphore is freed
+            semd_t *tmp_emptyProcQueue = tmp -> s_next;
+            tmp -> s_next = tmp_emptyProcQueue -> s_next;
             tmp_emptyProcQueue -> s_next = NULL;
             tmp_emptyProcQueue -> s_semAdd = NULL;
             tmp_emptyProcQueue -> s_procQ = mkEmptyProcQ();
@@ -130,15 +129,14 @@ pcb_t *removeBlocked(int *semAdd){
 
 pcb_t *outBlocked(pcb_t *p){
     semd_t *tmp = findSemInActiveList(p -> p_semAdd);
-    tmp = tmp -> s_next;
-    pcb_t *releasedPcb = outProcQ(&tmp -> s_procQ, p);
+    pcb_t *releasedPcb = outProcQ(&tmp -> s_next -> s_procQ, p);
     
     if(releasedPcb == NULL)
       return NULL;
 
-    if(emptyProcQ(tmp -> s_procQ)){                    //if the process queue is empty the semaphore is freed
-      semd_t *tmp_emptyProcQueue = tmp;
-      tmp = tmp_emptyProcQueue -> s_next;
+    if(emptyProcQ(tmp -> s_next -> s_procQ)){                    //if the process queue is empty the semaphore is freed
+      semd_t *tmp_emptyProcQueue = tmp -> s_next;
+      tmp -> s_next = tmp_emptyProcQueue -> s_next;
       tmp_emptyProcQueue -> s_next = NULL;
       tmp_emptyProcQueue -> s_semAdd = NULL;
       tmp_emptyProcQueue -> s_procQ = mkEmptyProcQ();
@@ -146,17 +144,6 @@ pcb_t *outBlocked(pcb_t *p){
     }
     return releasedPcb;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 /* Returns the PCB at the head of semAdd's queue */
 
@@ -171,3 +158,14 @@ pcb_t *headBlocked(int *semAdd){
 
     return headProcQ(tmp -> s_next -> s_procQ);
 }
+
+/*
+void printAddresses(){
+    semd_t *tmp = semd_h;
+    int i = 0;
+    while(tmp -> s_next -> s_semAdd != MAXADD){
+        printf("%d %x\n",i,tmp);
+        i++;
+        tmp = tmp -> s_next;
+    }
+}*/
