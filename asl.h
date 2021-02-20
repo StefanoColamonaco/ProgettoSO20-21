@@ -6,7 +6,7 @@
 #include "pandos_types.h"
 
 /*Table of free semaphores*/
-extern semd_t semd_table[MAXPROC+2];
+extern semd_t semd_table[];
 
 /* Pointer to list of free semaphores*/
 extern semd_PTR semdFree_h;

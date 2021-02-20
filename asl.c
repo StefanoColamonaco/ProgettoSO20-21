@@ -1,5 +1,5 @@
 #include "asl.h"
-#include "pcb.c"
+#include "pcb.h"
 
 /*
 Nota implementativa per la "relazione" siccome il valore vero e proprio del semaforo è un puntatore ad intero pr effettuare 
@@ -10,7 +10,12 @@ Proprio per questo motivo è opportuno aumentare il numero di semafori nella tab
 rispettivamente con valore 0 e 0x7FFFFFFF (bitmask per il max) 
 */
 
- /* Fills semdFree list and set a lower and an upper limit for semd_h (active semaphores) list*/
+
+semd_t semd_table[MAXPROC+2];
+
+semd_PTR semdFree_h;
+
+semd_PTR semd_h;
 
 void initASL(){
 
