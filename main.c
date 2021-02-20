@@ -11,34 +11,16 @@
 
 int main() {
     initPcbs();
-    pcb_PTR p = allocPcb();
-    pcb_PTR p1 = allocPcb();
-    pcb_PTR p2 = allocPcb();
-    pcb_PTR p3 = allocPcb();
-    //pcb_PTR tp = mkEmptyProcQ();
 
-
-    insertChild(p, p1);
-    insertChild(p, p2);
-    insertChild(p, p3);
-
-
-    if (outChild(p1) == p1) {
-        printf("out child corretto p1\n");
+    pcb_t *procp[MAXPROC];
+    for (int i = 0; i < MAXPROC; i++) {
+        if ((procp[i] = allocPcb()) == NULL)
+            printf("allocPcb: unexpected NULL   ");
     }
 
-    if (outChild(p2) == p2) {
-        printf("rimosso child corretto p2\n");
+    if (allocPcb() != NULL) {
+        printf("errore non è null");
     }
-
-    if (removeChild(p) == p3) {
-        printf("remove child p3 corretto \n");
-    }
-
-    if (emptyChild(p)) {
-        printf("empty child\n");
-    }
-
 
 }
 

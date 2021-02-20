@@ -1,7 +1,7 @@
 CC = gcc
 
 CFLAGS = -I/usr/share/include -I/usr/share/include/umps3 -I. -g -Wall -O0
-objects = pcb.o asl.o crtso.o libumps.o
+objects = pcb.o asl.o
 
 .PHONY: clean run debug
 

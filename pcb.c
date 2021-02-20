@@ -18,17 +18,36 @@ void initPcbs() {
 
 /* Insert a PCB into pcbFree_h list */
 
+/*
 void freePcb(pcb_t *p) {
-    p->p_next = pcbFree_h->p_next;
-    p->p_prev = pcbFree_h;
-    pcbFree_h->p_next = p;
-    p->p_next->p_prev = p;
+    if (pcbFree_h == NULL) {
+        pcbFree_h = p;
+        p->p_next = p->p_prev = p;
+    } else {
+        p->p_next = pcbFree_h->p_next;
+        p->p_prev = pcbFree_h;
+        pcbFree_h->p_next = p;
+        p->p_next->p_prev = p;
+    }
+}
+*/
+
+void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbFree_h->p_prev)
+    if (pcbFree_h == NULL) {
+        pcbFree_h = p;
+        p->p_next = p->p_prev = p;
+    } else {
+        p->p_next = pcbFree_h;
+        p->p_prev = pcbFree_h->p_prev;
+        pcbFree_h->p_prev = p;
+        p->p_prev->p_next = p;
+    }
 }
 
 
 /* PCB allocation and initialization*/
 
-pcb_t *allocPcb() {
+/*pcb_t *allocPcb() {
     if (pcbFree_h == NULL) {
         return NULL;
     } else {
@@ -47,8 +66,33 @@ pcb_t *allocPcb() {
 
         return toReturn;
     }
-}
+}*/
 
+pcb_t *allocPcb() {
+    if (pcbFree_h == NULL) {
+        return NULL;
+    } else {
+        pcb_PTR toReturn = pcbFree_h;
+        if (pcbFree_h != pcbFree_h->p_next) {
+            pcbFree_h = pcbFree_h->p_next;
+        } else {
+            pcbFree_h = NULL;
+        }
+
+        unlinkPCB(toReturn);
+
+        toReturn->p_prev = NULL;
+        toReturn->p_next = NULL;
+        toReturn->p_child = NULL;
+        toReturn->p_prnt = NULL;
+        toReturn->p_next_sib = NULL;
+        toReturn->p_prev_sib = NULL;
+        toReturn->p_time = 0;
+        //toReturn->p_s = NULL; //todo figure out what to do with this member
+
+        return toReturn;
+    }
+}
 
 /* Make an empty PCB list */
 

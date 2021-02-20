@@ -36,4 +36,4 @@ crtso.o : crtso.S
 
 .PHONY = clean
 clean:
-	rm $(objects) kernel
+	rm $(objects) kernel kernel.core.umps kernel.stab.umps
