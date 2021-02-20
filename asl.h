@@ -1,7 +1,6 @@
 #ifndef PROGETTOSO20_21_ASL_H
 #define PROGETTOSO20_21_ASL_H
 
-//#include <stdio.h>
 #include "pandos_const.h"
 #include "pandos_types.h"
 
