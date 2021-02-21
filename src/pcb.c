@@ -18,20 +18,6 @@ void initPcbs() {
 
 /* Insert a PCB into pcbFree_h list */
 
-/*
-void freePcb(pcb_t *p) {
-    if (pcbFree_h == NULL) {
-        pcbFree_h = p;
-        p->p_next = p->p_prev = p;
-    } else {
-        p->p_next = pcbFree_h->p_next;
-        p->p_prev = pcbFree_h;
-        pcbFree_h->p_next = p;
-        p->p_next->p_prev = p;
-    }
-}
-*/
-
 void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbFree_h->p_prev)
     if (pcbFree_h == NULL) {
         pcbFree_h = p;
@@ -46,27 +32,6 @@ void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbF
 
 
 /* PCB allocation and initialization*/
-
-/*pcb_t *allocPcb() {
-    if (pcbFree_h == NULL) {
-        return NULL;
-    } else {
-        pcb_PTR toReturn = pcbFree_h->p_next;
-        pcbFree_h->p_next = toReturn->p_next;
-        toReturn->p_next->p_prev = toReturn->p_prev;
-
-        toReturn->p_prev = NULL;
-        toReturn->p_next = NULL;
-        toReturn->p_child = NULL;
-        toReturn->p_prnt = NULL;
-        toReturn->p_next_sib = NULL;
-        toReturn->p_prev_sib = NULL;
-        toReturn->p_time = 0;
-        //toReturn->p_s = NULL; //todo figure out what to do with this member
-
-        return toReturn;
-    }
-}*/
 
 pcb_t *allocPcb() {
     if (pcbFree_h == NULL) {
@@ -138,8 +103,6 @@ pcb_t *headProcQ(pcb_t *tp) {
 
 /* Removes oldest element from tp and return a pointer */
 
-
-
 pcb_t *removeProcQ(pcb_t **tp) {
     if (emptyProcQ(*tp))
         return NULL;
@@ -156,11 +119,11 @@ pcb_t *removeProcQ(pcb_t **tp) {
 
 /* Removes PCB p from tp list ( return NULL otherwise ) */
 
-pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {         //todo refactor to remove repeated code
+pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {
     if (emptyProcQ((*tp)))
         return NULL;
 
-    if (*tp == p) {
+    if (*tp == p) { //if p is at the end, update tp
         if (*tp != (*tp)->p_prev) {
             *tp = (*tp)->p_prev;
         } else {
@@ -169,14 +132,14 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {         //todo refactor to remove repeat
         return unlinkPCB(p);
     }
 
-    pcb_t *tmp = (*tp)->p_next;
+    pcb_t *iter = (*tp)->p_next;
     do {
-        if (tmp == p) {
-            return unlinkPCB(tmp);
+        if (iter == p) {
+            return unlinkPCB(iter);
         } else {
-            tmp = tmp->p_next;
+            iter = iter->p_next;
         }
-    } while (tmp != *tp);
+    } while (iter != *tp);
 
     return NULL;
 }
@@ -204,7 +167,6 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
         iter->p_next_sib = p;
         p->p_prev_sib = iter;
     }
-
 }
 
 /* Removes first child of p and returns it ( return NULL otherwise ) */
@@ -226,7 +188,7 @@ pcb_t *outChild(pcb_t *p) {
     if (p->p_prnt == NULL)
         return NULL;
 
-    if (p->p_prnt->p_child == p) { //if p is first child, update parent's child pointer
+    if (p->p_prnt->p_child == p) {  //if p is first child, update parent's child pointer
         p->p_prnt->p_child = p->p_next_sib;
     }
 
