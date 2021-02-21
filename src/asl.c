@@ -1,16 +1,6 @@
 #include "asl.h"
 #include "pcb.h"
 
-/*
-Nota implementativa per la "relazione" siccome il valore vero e proprio del semaforo è un puntatore ad intero per effettuare
-una ricerca più efficiente all'interndo della lista di semafori attivi dobbiamo basarci su questo.
-Per semplificare le operazioni di ricerca quindi è opportuno procedere in ordine rispetto al valore esadecimale dell'indirizzo.
-semd_h risulta quindi una lista ordinata rispetto al valore dell'indirizzo puntato da s_semAdd.
-In questo modo è facile risalire ad un elemento (se è presente) o al suo predecessore attraverso la funzione findSemInActiveList.
-Proprio per questo motivo è opportuno aumentare il numero di semafori nella table per averne due che fungano da 'sentinella',
-rispettivamente con valore 0 e 0x7FFFFFFF (bitmask per il max), questi semafori vengono allocati all' interno di initASL() e vanno
-a formare la lista inizialmente vuota semd_h di semafori attivi.
-*/
 
 semd_t semd_table[MAXPROC+2];
 

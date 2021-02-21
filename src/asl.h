@@ -22,5 +22,9 @@ pcb_t *removeBlocked(int *semAdd);                                  /* Returns t
 pcb_t *outBlocked(pcb_t *p);                                        /* Remove p from the queue where it is blocked ( returns NULL otherwise ) */
 pcb_t *headBlocked(int *semAdd);                                    /* Returns the PCB at the head of semAdd's queue */
 
+/*Utility*/
+semd_t *findSemInActiveList(int *semAdd);
+semd_t* newSemd();
+void freeSemd(semd_t *semd);
 
 #endif //PROGETTOSO20_21_ASL_H
