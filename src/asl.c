@@ -28,7 +28,7 @@ void initASL(){
     lowerLimit -> s_semAdd = 0;
     upperLimit -> s_next = NULL;
     upperLimit -> s_procQ = mkEmptyProcQ();
-    upperLimit -> s_semAdd = MAXADD;         //0x7FFFFFFF is a bitmask for 'max'
+    upperLimit -> s_semAdd = (int*)MAXADD;         //0x7FFFFFFF is a bitmask for 'max'
 
     semd_h = lowerLimit;
 
@@ -49,7 +49,8 @@ void initASL(){
 semd_t *findSemInActiveList(int *semAdd){
   semd_t *tmp = semd_h;
   
-  while(tmp -> s_next -> s_semAdd < semAdd && tmp -> s_next -> s_semAdd != MAXADD) tmp = tmp -> s_next;
+  while(tmp -> s_next -> s_semAdd < semAdd && tmp -> s_next -> s_semAdd != (int*)MAXADD)
+      tmp = tmp -> s_next;
   return tmp;
 }
 

@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "pandos_const.h"
-#include "pandos_types.h"
-#include "pcb.h"
+#include "../src/pandos_const.h"
+#include "../src/pandos_types.h"
+#include "../src/pcb.h"
 
 int main() {
     initPcbs();
