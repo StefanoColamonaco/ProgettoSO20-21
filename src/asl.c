@@ -2,14 +2,15 @@
 #include "pcb.h"
 
 /*
-Nota implementativa per la "relazione" siccome il valore vero e proprio del semaforo è un puntatore ad intero pr effettuare 
-una ricerca all'interndo della lista di semafori attivi dobbiamo basarci su questo.
-Per semplificare le operazioni di ricerca quindi è opportuno procedere in ordine di "dimensione" dell'indirizzo grazie al fatto che 
-la definzione della sem table è quella di un array e quindi avviene in celle di memoria contigue.
-Proprio per questo motivo è opportuno aumentare il numero di semafori nella table per averne due che fungano da sentinella, 
-rispettivamente con valore 0 e 0x7FFFFFFF (bitmask per il max) 
+Nota implementativa per la "relazione" siccome il valore vero e proprio del semaforo è un puntatore ad intero per effettuare
+una ricerca più efficiente all'interndo della lista di semafori attivi dobbiamo basarci su questo.
+Per semplificare le operazioni di ricerca quindi è opportuno procedere in ordine rispetto al valore esadecimale dell'indirizzo.
+semd_h risulta quindi una lista ordinata rispetto al valore dell'indirizzo puntato da s_semAdd.
+In questo modo è facile risalire ad un elemento (se è presente) o al suo predecessore attraverso la funzione findSemInActiveList.
+Proprio per questo motivo è opportuno aumentare il numero di semafori nella table per averne due che fungano da 'sentinella',
+rispettivamente con valore 0 e 0x7FFFFFFF (bitmask per il max), questi semafori vengono allocati all' interno di initASL() e vanno
+a formare la lista inizialmente vuota semd_h di semafori attivi.
 */
-
 
 semd_t semd_table[MAXPROC+2];
 
@@ -17,12 +18,16 @@ semd_PTR semdFree_h;
 
 semd_PTR semd_h;
 
+
+/* Fills semdFree_h list and initialize active semaphores list */
+
 void initASL(){
 
     semdFree_h = NULL;
 
-    semd_t *lowerLimit = &(semd_table[0]);        //sentinel for lower limit
-    semd_t *upperLimit = &(semd_table[1]);        //sentinel for upper limit
+    /* Definition for lower and upper limits for semd_h */
+    semd_t *lowerLimit = &(semd_table[0]);                  //Sentinel for lower limit
+    semd_t *upperLimit = &(semd_table[1]);                  //Sentinel for upper limit
     lowerLimit -> s_next = upperLimit;
     lowerLimit -> s_procQ = mkEmptyProcQ();
     lowerLimit -> s_semAdd = 0;
@@ -30,8 +35,9 @@ void initASL(){
     upperLimit -> s_procQ = mkEmptyProcQ();
     upperLimit -> s_semAdd = (int*)MAXADD;         //0x7FFFFFFF is a bitmask for 'max'
 
-    semd_h = lowerLimit;
+    semd_h = lowerLimit;                                    //semd_h initialization
 
+    /* Fills semdFree_h list */
     for(int i = 2; i < MAXPROC+2; i++){
         semd_t *tmp = semdFree_h;
         if(semdFree_h == NULL){
@@ -44,7 +50,7 @@ void initASL(){
     }
 }
 
-/* Utility function to find semd_t value associated to the element before semAdd*/
+/* Utility function to find semd_t value associated to the element before semAdd */
 
 semd_t *findSemInActiveList(int *semAdd){
   semd_t *tmp = semd_h;
@@ -69,7 +75,7 @@ semd_t* newSemd() {
     }
 }
 
-/* returns an element to the free list */
+/* Returns an element to the free list */
 
 void freeSemd(semd_t *semd){
     semd_t *tmp = semdFree_h;
@@ -82,17 +88,19 @@ void freeSemd(semd_t *semd){
     }
 }
 
-/* Insert p into the queue of blocked processes associated to semAdd */
-// return TRUE if semdFree_h is empty, FALSE otherwise
+/*
+    Insert p into the queue of blocked processes associated to semAdd
+    Return TRUE if semdFree_h is empty, FALSE otherwise
+*/
 
 int insertBlocked(int *semAdd, pcb_t *p){
     semd_t *tmp = findSemInActiveList(semAdd);
 
-    if(tmp -> s_next -> s_semAdd == semAdd){    //semaphore is already allocated, we only need to insert p in proc queue
+    if(tmp -> s_next -> s_semAdd == semAdd){    //Semaphore is already allocated, we only need to insert p in proc queue
         p -> p_semAdd = semAdd;
         insertProcQ(&tmp -> s_next -> s_procQ, p);
         return FALSE;
-    } else {                                   //we need to allocate a semaphore
+    } else {                                   //We need to allocate a semaphore
         semd_t *newSem = newSemd();
         if(newSem == NULL)
             return TRUE;
@@ -114,7 +122,7 @@ pcb_t *removeBlocked(int *semAdd){
     semd_t *tmp = findSemInActiveList(semAdd);
     if(tmp -> s_next -> s_semAdd == semAdd){
         pcb_t *removed = removeProcQ(&tmp -> s_next -> s_procQ);
-        if(emptyProcQ(tmp -> s_next -> s_procQ)){                 //if the process queue is empty the semaphore is freed
+        if(emptyProcQ(tmp -> s_next -> s_procQ)){                 //If the process queue is empty the semaphore is freed
             semd_t *tmp_emptyProcQueue = tmp -> s_next;
             tmp -> s_next = tmp_emptyProcQueue -> s_next;
             tmp_emptyProcQueue -> s_next = NULL;
@@ -135,7 +143,7 @@ pcb_t *outBlocked(pcb_t *p){
     if(releasedPcb == NULL)
       return NULL;
 
-    if(emptyProcQ(tmp -> s_next -> s_procQ)){                    //if the process queue is empty the semaphore is freed
+    if(emptyProcQ(tmp -> s_next -> s_procQ)){                    //If the process queue is empty the semaphore is freed
       semd_t *tmp_emptyProcQueue = tmp -> s_next;
       tmp -> s_next = tmp_emptyProcQueue -> s_next;
       tmp_emptyProcQueue -> s_next = NULL;
@@ -151,22 +159,12 @@ pcb_t *outBlocked(pcb_t *p){
 pcb_t *headBlocked(int *semAdd){
     semd_t *tmp = findSemInActiveList(semAdd);
 
-    if( tmp == NULL)
+    if( emptyProcQ(tmp -> s_next -> s_procQ ) || tmp == NULL)             //Non-mandatory security measure
         return NULL;
 
-    if( emptyProcQ(tmp -> s_next -> s_procQ ) )
+    if( tmp -> s_next -> s_semAdd != semAdd )               //SemAdd is not in semd_h
         return NULL;
 
     return headProcQ(tmp -> s_next -> s_procQ);
 }
 
-/*
-void printAddresses(){
-    semd_t *tmp = semd_h;
-    int i = 0;
-    while(tmp -> s_next -> s_semAdd != MAXADD){
-        printf("%d %x\n",i,tmp);
-        i++;
-        tmp = tmp -> s_next;
-    }
-}*/

@@ -1,7 +1,6 @@
 #ifndef PROGETTOSO20_21_ASL_H
 #define PROGETTOSO20_21_ASL_H
 
-//#include <stdio.h>
 #include "pandos_const.h"
 #include "pandos_types.h"
 
@@ -23,6 +22,5 @@ pcb_PTR removeBlocked(int *semAdd);                                  /* Returns 
 pcb_PTR outBlocked(pcb_t *p);                                        /* Remove p from the queue where it is blocked ( returns NULL otherwise ) */
 pcb_PTR headBlocked(int *semAdd);                                    /* Returns the PCB at the head of semAdd's queue */
 
-//void printAddresses();
 
 #endif //PROGETTOSO20_21_ASL_H
