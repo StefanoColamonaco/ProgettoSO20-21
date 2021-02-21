@@ -35,7 +35,7 @@ $(obj_dir)/%.o : $(src_dir)/%.c | $(obj_dir)
 $(obj_dir)/crtso.o $(obj_dir)/libumps.o : $(obj_dir)/%.o : %.S | $(obj_dir)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(obj_dir)/ :
+$(obj_dir) :
 	mkdir "$(obj_dir)"
 
 clean:
