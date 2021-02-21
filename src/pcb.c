@@ -40,7 +40,8 @@ pcb_t *allocPcb() {
         return NULL;
     } else {
         pcb_PTR toReturn = pcbFree_h;
-        if (pcbFree_h != pcbFree_h->p_next) {
+
+        if (pcbFree_h != pcbFree_h->p_next) {  //update head
             pcbFree_h = pcbFree_h->p_next;
         } else {
             pcbFree_h = NULL;
@@ -161,7 +162,7 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
     if (emptyChild(prnt)) {
         prnt->p_child = p;
         p->p_prev_sib = NULL;
-    } else {
+    } else {    //reach the end
         pcb_t *iter = prnt->p_child;
         while (iter->p_next_sib != NULL) {
             iter = iter->p_next_sib;
