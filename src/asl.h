@@ -6,14 +6,6 @@
 
 #define MAXADD 0x7FFFFFFF
 
-/*Table of free semaphores*/
-extern semd_t semd_table[];
-
-/* Pointer to list of free semaphores*/
-extern semd_PTR semdFree_h;
-
-/* Pointer to list of active semaphores */
-extern semd_PTR semd_h;
 
 /* ASL management */
 void initASL();                                                     /* Fills semdFree list */

@@ -1,12 +1,16 @@
 #include "asl.h"
 #include "pcb.h"
 
+#define MAXADD 0x7FFFFFFF
 
-semd_t semd_table[MAXPROC+2];
+/*Table of free semaphores*/
+static semd_t semd_table[MAXPROC+2];
 
-semd_PTR semdFree_h;
+/* Pointer to list of free semaphores*/
+static semd_PTR semdFree_h;
 
-semd_PTR semd_h;
+/* Pointer to list of active semaphores */
+static semd_PTR semd_h;
 
 
 /* Fills semdFree_h list and initialize active semaphores list */

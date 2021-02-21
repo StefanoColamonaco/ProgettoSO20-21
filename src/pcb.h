@@ -6,14 +6,6 @@
 #include "pandos_const.h"
 
 
-/* Pointer to list of free pcbs*/
-extern pcb_PTR pcbFree_h;
-
-
-/*Table of free pcbs*/
-extern pcb_t pcbFree_table[MAXPROC];
-
-
 /* PCB allocation */
 
 void initPcbs();                                                    /* Fills pcbFree_h list */

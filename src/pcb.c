@@ -1,8 +1,10 @@
 #include "pcb.h"
 
-pcb_PTR pcbFree_h;
+/* Pointer to list of free pcbs*/
+static pcb_PTR pcbFree_h;
 
-pcb_t pcbFree_table[MAXPROC];
+/*Table of free pcbs*/
+static pcb_t pcbFree_table[MAXPROC];
 
 
 /* Fills pcbFree_h list */
@@ -152,7 +154,7 @@ int emptyChild(pcb_t *p) {
 }
 
 /* Insert p as child of prnt  */
-/* function is O(n) because the list is required to be NULL terminated and we only have a head-pointer */
+
 void insertChild(pcb_t *prnt, pcb_t *p) {
     p->p_prnt = prnt;
     p->p_next_sib = NULL;
@@ -169,8 +171,8 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
     }
 }
 
-/* Removes first child of p and returns it ( return NULL otherwise ) */
 
+/* Removes first child of p and returns it ( return NULL otherwise ) */
 
 pcb_t *removeChild(pcb_t *p) {
     if (emptyChild(p))
@@ -184,6 +186,8 @@ pcb_t *removeChild(pcb_t *p) {
     return child;
 }
 
+
+
 pcb_t *outChild(pcb_t *p) {
     if (p->p_prnt == NULL)
         return NULL;
@@ -196,6 +200,8 @@ pcb_t *outChild(pcb_t *p) {
     return p;
 }
 
+
+
 pcb_t *unlinkPCB(pcb_t *p) {
     p->p_prev->p_next = p->p_next;
     p->p_next->p_prev = p->p_prev;
@@ -203,6 +209,8 @@ pcb_t *unlinkPCB(pcb_t *p) {
     p->p_next = NULL;
     return p;
 }
+
+
 
 pcb_t *unlinkChild(pcb_t *p) {
     p->p_prnt = NULL;
