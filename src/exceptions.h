@@ -1,0 +1,1 @@
+// gestione delle eccezioni per le sys call

@@ -1,0 +1,1 @@
+// serve a gestire l'inizializzazione di variabili globali e strutture dati
