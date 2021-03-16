@@ -55,5 +55,7 @@ typedef struct semd_t {
     pcb_PTR s_procQ;                /* ptr to tail of the queue of procs. blocked on this sem. */
 
 } semd_t, *semd_PTR;
-	
+
+
+
 #endif

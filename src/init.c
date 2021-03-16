@@ -1,4 +1,7 @@
 #include "init.h"
+#include "exceptions.h"
+
+#define NUCLEUS_STACKPAGE_TOP 0x20001000
 
 
 int processCount = 0;        //number of started but not yet terminated processes
@@ -14,4 +17,13 @@ pcb_t *currentProcess = NULL;   //pointer to pcb that is in running state
 int main() {
     initPcbs();
     initASL();
+
+    passupvector_t *passupvector = (*passupvector)PASSUPVECTOR;
+    passupvector->tlb_refill_handler = (memaddr)uTLB_RefillHandler;
+    passupvector->tlb_refill_stackPtr = NUCLEUS_STACKPAGE_TOP;
+    passupvector->exception_handler = (memaddr)handleExceptions();
+
+
+
+
 }
