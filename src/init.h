@@ -19,6 +19,18 @@ extern pcb_t *currentProcess;   //pointer to pcb that is in running state
 extern semd_t deviceSemaphores[];
 
 
+
+
+/*Utility functions*/
+static passupvector_t initPassupVector();
+
+static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
+
+static pcb_t *initFirstProcess();
+
+static inline void setStatusBitToValue();
+
+
 //todo add device semaphores
 
 
