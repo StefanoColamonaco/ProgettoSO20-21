@@ -1,7 +1,6 @@
-#include "pandos_const.h"
-#include "pandos_types.h"
-
+#include "systemCalls.h"
 #include "init.h"
+#include "exceptions.h"
 #include "scheduler.h"
 #include "asl.h"
 #include "pcb.h"
@@ -11,11 +10,11 @@ void systemcallsHandler(){
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    //in a0 (gpr[3]) troviamo il numero della sys call
   if(systemState -> status & USERPON != 0){                      //processo in user mode -> trap/eccezione
-    kill();    //eccezione
+    kill(GENERALEXCEPT);    
   }
 
   copyStateInfo(systemState, &(currentProcess -> p_s));
-  currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;     //nota: pc_epc è il pc salvato nello stato del processo
+  currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;     //nota: pc_epc è il pc salvato nello stato del processo (4 bytes)
 
   switch(currentSyscall){
     case CREATEPROCESS: {
@@ -52,7 +51,7 @@ void systemcallsHandler(){
     }
     // otherwise (sys call number > 8 or < 1)
     default: {
-      passUpOrDie(GENERALEXCEPT);
+      kill(GENERALEXCEPT);
     }
   }
 
@@ -109,6 +108,4 @@ support_t *get_support_data() {
 
 }
 
-kill() {
 
-}

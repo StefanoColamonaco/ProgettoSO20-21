@@ -1,6 +1,10 @@
 #ifndef PROGETTOSO20_21_SYSTEMCALLS_H
 #define PROGETTOSO20_21_SYSTEMCALLS_H
 
+#include "pandos_types.h"
+#include "pandos_const.h"
+#include "pcb.h"
+#include "asl.h"
 
 /* System calls handler */
 void systemcallsHandler();
@@ -15,7 +19,5 @@ int get_Cpu_Time();
 int wait_For_Clock();
 support_t *get_support_data();
 
-/* other utility functions */
-void kill();
 
 #endif //PROGETTOSO20_21_SYSTEMCALLS_H
