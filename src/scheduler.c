@@ -9,9 +9,26 @@
 
 #include "/usr/include/umps3/umps/libumps.h"
 
-void scheduler() {}
+void scheduler() {
 
+  pcb_t *p = removeProcQ(&readyQueue);
+  if(p != NULL){
+    //STCK(startT);
+    setTIMER(5000);
+    contextSwitch(p);
+  }
 
+  if(processCount == 0){
+    HALT();
+  } else {
+    if(softBlockCount > 0){
+      currentProcess = NULL;
+      WAIT();
+    } else {                     //we got deadlock
+      PANIC();
+    }
+  }
+}
 
 void copyStateInfo(state_t *src, state_t *dest){
   for (int i = 0; i < STATE_GPR_LEN; i++) {
