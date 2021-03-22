@@ -7,8 +7,46 @@
 #include "pcb.h"
 #include "exceptions.h"
 #include "systemCalls.h"
+#include "interrupts.h"
+#include "stateUtil.h"
 
-#include "/usr/include/umps3/umps/libumps.h"   //attenzione, non so se funziona per tutti
+#include <umps3/umps/cp0.h>
+#include <umps3/umps/libumps.h>   //attenzione, non so se funziona per tutti
+
+
+void handleException() {
+    unsigned int cause = getCAUSE();
+    switch (CAUSE_GET_EXCCODE(cause)) {
+        case EXC_INT: 0 interrupts
+            handleInterrupts():
+            break;
+
+        case EXC_MOD:
+        case EXC_TLBL:
+        case EXC_TLBS:
+            //handleTLBEvents
+            break;
+
+        case EXC_ADEL:
+        case EXC_ADES:
+        case EXC_IBE:
+        case EXC_DBE:
+            //handleProgramTrap
+            break;
+
+        case EXC_SYS:
+            handleSystemcalls();
+            break;
+
+        case EXC_BP:
+        case EXC_RI:
+        case EXC_CPU:
+        case EXC_OV:
+            //handleprogramTrap
+            break;
+
+    }
+}
 
 void TLBExceptionHandler() {
     kill(PGFAULTEXCEPT);
@@ -31,4 +69,12 @@ void kill(int exceptionType){
   terminate_Process(currentProcess);
   scheduler();
 
+}
+
+//placeholder to replace in future implementations
+void uTLB_RefillHandler() {
+    setENTRYHI(0x80000000);
+    setENTRYLO(0x00000000);
+    TLBWR();
+    LDST ((state_PTR) 0x0FFFF000);
 }

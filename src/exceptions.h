@@ -3,8 +3,13 @@
 
 
 void handleExceptions();        //entry point for exceptions and interrupt handling
+
 void TLBExceptionHandler();       //handler for exception related to TLB (it kill the process witch exception PGFAULTEXCEPT)
-void kill(int exceptionType);     //detailed description in exception.c but is a process killer 
+
+void kill(int exceptionType);     //detailed description in exception.c
+
+void uTLB_RefillHandler(); //placeholder
+
 
 
 #endif //PROGETTOSO20_21_EXCEPTIONS_H
