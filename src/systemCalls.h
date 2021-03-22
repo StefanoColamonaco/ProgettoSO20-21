@@ -6,6 +6,8 @@
 #include "pcb.h"
 #include "asl.h"
 
+extern int *mutualExclusion;      
+
 /* System calls handler */
 void systemcallsHandler();
 

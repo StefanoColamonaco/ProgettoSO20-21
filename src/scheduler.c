@@ -7,6 +7,8 @@
 #include "asl.h"
 #include "pcb.h"
 
+#include "/usr/include/umps3/umps/libumps.h"
+
 void scheduler() {}
 
 
@@ -21,4 +23,10 @@ void copyStateInfo(state_t *src, state_t *dest){
   dest -> hi = src -> hi;
 }
 
-void contextSwitch(pcb_t *currentProc){}
+/*caso in cui lo scheduler decida di eseguire un altro processo. In tal caso salviamo il processo attuale e richiamiamo
+la funzione di exception handling del Bios (che ci è stata fornita) passando lo stato del processo corrente.
+*/
+void contextSwitch(pcb_t *current){
+  currentProcess = current;
+  LDST(&(currentProcess -> p_s));
+}

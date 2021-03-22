@@ -5,6 +5,8 @@
 #include "asl.h"
 #include "pcb.h"
 
+int *mutualExclusion = 0;
+
 void systemcallsHandler(){
 
   state_t *systemState = (state_t *) BIOSDATAPAGE;
@@ -85,11 +87,23 @@ void terminate_Process(pcb_t *current) {
 }
 
 void passeren() {
-
+  mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
+  *mutualExclusion--;
+  if(*mutualExclusion < 0){
+    blockCurrentProc(mutualExclusion);
+  } else contextSwitch(currentProcess);
 }
 
 void verhogen() {
-
+  mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
+  *mutualExclusion++;
+  if(*mutualExclusion <= 0){
+    pcb_t *tmp = removeBlocked(mutualExclusion);
+    if(tmp != NULL){
+      insertProcQ(&readyQueue, tmp);
+    }
+  }
+  contextSwitch(currentProcess);
 }
 
 int  wait_For_IO() {
@@ -101,7 +115,16 @@ int get_Cpu_Time() {
 }
 
 int wait_For_Clock() {
+  //                                          ATTENZIONE
+  //definire clockSemaphore nell'init
+  int clockSemaphore = 0;
+  clockSemaphore--;
+  if(clockSemaphore < 0){
+    softBlockCount++;
+    blockCurrentProc(&clockSemaphore);
+  }
 
+  contextSwitch(currentProcess);
 }
 
 support_t *get_support_data() {
