@@ -6,15 +6,15 @@
 #include "exceptions.h"
 #include "asl.h"
 #include "pcb.h"
+#include "stateUtil.h"
 
-#include "/usr/include/umps3/umps/libumps.h"
+#include <umps3/umps/libumps.h>
 
 void scheduler() {
-
   pcb_t *p = removeProcQ(&readyQueue);
   if(p != NULL){
     //STCK(startT);
-    setTIMER(5000);
+    setTIMER(TIMESLICE);
     contextSwitch(p);
   }
 
@@ -23,27 +23,27 @@ void scheduler() {
   } else {
     if(softBlockCount > 0){
       currentProcess = NULL;
+      setStatusForWaiting();
       WAIT();
-    } else {                     //we got deadlock
+    } else {                     //deadlock
       PANIC();
     }
   }
 }
 
-void copyStateInfo(state_t *src, state_t *dest){
-  for (int i = 0; i < STATE_GPR_LEN; i++) {
-    dest -> gpr[i] = src -> gpr[i];
-  }
-  dest -> pc_epc = src -> pc_epc;
-  dest -> cause = src -> cause;
-  dest -> status = src -> status;
-  dest -> hi = src -> hi;
-}
 
 /*caso in cui lo scheduler decida di eseguire un altro processo. In tal caso salviamo il processo attuale e richiamiamo
 la funzione di exception handling del Bios (che ci è stata fornita) passando lo stato del processo corrente.
 */
 void contextSwitch(pcb_t *current){
   currentProcess = current;
-  LDST(&(currentProcess -> p_s));
+  LDST(&(currentProcess->p_s));
 }
+
+void setStatusForWaiting() {
+    state_t newState = (state_t)getSTATUS();
+    setStatusBitToValue(&newState, STATUS_IEp_BIT, 1); //enable interrupts
+    setStatusBitToValue(&newState, STATUS_TE_BIT, 0); //disable local timer
+    setSTATUS(newState);
+}
+

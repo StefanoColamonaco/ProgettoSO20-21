@@ -27,7 +27,7 @@ static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
 
 static pcb_t *initFirstProcess();
 
-static inline void setStatusBitToValue();
+
 
 
 
