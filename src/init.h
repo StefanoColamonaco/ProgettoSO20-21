@@ -20,7 +20,6 @@ extern semd_t deviceSemaphores[];
 
 
 
-
 /*Utility functions*/
 static passupvector_t initPassupVector();
 
@@ -31,7 +30,9 @@ static pcb_t *initFirstProcess();
 static inline void setStatusBitToValue();
 
 
-//todo add device semaphores
+
+/*test function*/
+extern void test();
 
 
 

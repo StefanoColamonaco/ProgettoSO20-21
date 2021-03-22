@@ -3,6 +3,7 @@
 #include "init.h"
 #include "exceptions.h"
 #include "p2test.c"
+#include "scheduler.h"
 
 #define NUCLEUS_STACKPAGE_TOP 0x20001000
 #define DEVICE_NUM 49
@@ -21,11 +22,10 @@ semd_t deviceSemaphores[DEVICE_NUM] = {0};
 int main() {
     initPcbs();
     initASL();
-
     passupvector_t *passupVector = initPassupVector();      //todo rename passupVector to avoid ambiguity
     initFirstProcess();
-
     loadIntervalTimer(100000);
+    scheduler();
 
 }
 
@@ -33,7 +33,7 @@ int main() {
 
 
 passupvector_t *initPassupVector() {
-    passupvector_t *toReturn = (*passupvector)PASSUPVECTOR;;
+    passupvector_t *toReturn = (*passupvector)PASSUPVECTOR;
     toReturn->(memaddr)tlb_refill_handler = (memaddr)uTLB_RefillHandler;    //todo check this for correct typing
     toReturn->tlb_refill_stackPtr = NUCLEUS_STACKPAGE_TOP;
     toReturn->exception_handler = (memaddr)handleExceptions();
@@ -50,14 +50,12 @@ pcb_t *initFirstProcess() {
     processCount++;
     pcb_t *firstProcess = allocPcb();
     state_t *state = firstProcess->p_s;
-
+    //todo consider refactoring for clarity
     setStatusBitToValue(state, STATUS_IEp_BIT, 1); //disables interrupts
     setStatusBitToValue(state, STATUS_TE_BIT, 1); //enable local timer
     setStatusBitToValue(state, STATUS_KUp_BIT, 0); //kernel mode
-    //todo set stack pointer to RAMTOP
-
     firstProcess->p_s.(memaddrs)pc_epc = (memaddr)test; //set PC to test function
-
+    RAMTOP(firstProcess->p_s.reg_sp)    //side effect also sets the stackpointer
 
     firstProcess->p_time = 0;
     firstProcess->p_semAdd = NULL;
