@@ -4,10 +4,11 @@
 #include "scheduler.h"
 #include "asl.h"
 #include "pcb.h"
+#include "stateUtil.h"
 
 int *mutualExclusion = 0;
 
-void systemcallsHandler(){
+void handleSystemcalls(){
 
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    //in a0 (gpr[3]) troviamo il numero della sys call

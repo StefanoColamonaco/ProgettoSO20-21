@@ -9,7 +9,7 @@
 extern int *mutualExclusion;      
 
 /* System calls handler */
-void systemcallsHandler();
+void handleSystemcalls();
 
 /* System calls 1-8 */
 int create_Process();
