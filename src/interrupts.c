@@ -2,22 +2,25 @@
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/const.h>
 #include <umps3/umps/types.h>
+#include <umps3/umps/arch.h>
 
 #include "interrupts.h"
+#include "systemCalls.h"
 
-#define PROCESS_LOCAL_TIMER 1
-#define INTERVAL_TIMER 2
+#define PLTINT 1
+#define INTERTIMEINT 2
+
 
 
 void handleInterrupts() {
     unsigned int cause = getCAUSE();
 
-    while ((cause & CAUSE_IP_MASK) != 0) {
-        if (cause & CAUSE_IP(PROCESS_LOCAL_TIMER)){
+    while ((cause & CAUSE_IP_MASK) != 0) {  //check for pending interrupts
+        if (cause & CAUSE_IP(PLTINT)){
             handlePLTInterrupt();
         }
 
-        else if (cause & CAUSE_IP(INT)){
+        else if (cause & CAUSE_IP(INTERTIMEINT)){
             handleIntervalTimerInterrupt();
         }
 
@@ -53,15 +56,21 @@ void handleIntervalTimerInterrupt() {
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNo(interruptLine);
-    unsigned int debAddrBase = computeDevAddrBase(interruptLine, deviceNo);
+    unsigned int devAddrBase = DEV_REG_ADDR(interruptLine, deviceNo);
+    unsigned int savedStatus = *devAddrBase;
+    acknowledgeInterrupt(devAddrBase);
+    verhogen();
+
 }
 
 unsigned int getDeviceNo(unsigned int interruptLine) {
-    switch (interruptLine) {
-
+    unsigned int *bitmap = (memaddr)CDEV_BITMAP_ADDR(interruptLine);
+    for (int i = 0; i < DEVPERINT; i++) {
+        if (*bitmap & 1U << i)
+            return i;
     }
 }
 
-unsigned int computeDevAddrBase(int interruptLine, int deviceNo) {
-    return 0x10000054 + ((interruptLine - 3) * 0x80) + (deviceNo * 0x10)
+static inline void acknowledgeInterrupt(memaddr devBaseAddr) {
+    *(devBaseAddr + 0x4) = 1;
 }
