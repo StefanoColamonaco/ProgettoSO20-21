@@ -11,14 +11,14 @@
 #include "stateUtil.h"
 
 #include <umps3/umps/cp0.h>
-#include <umps3/umps/libumps.h>   //attenzione, non so se funziona per tutti
+#include <umps3/umps/libumps.h>
 
 
 void handleException() {
     unsigned int cause = getCAUSE();
     switch (CAUSE_GET_EXCCODE(cause)) {
-        case EXC_INT: 0 interrupts
-            handleInterrupts():
+        case EXC_INT:
+            handleInterrupts();
             break;
 
         case EXC_MOD:
