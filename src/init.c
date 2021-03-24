@@ -8,8 +8,6 @@
 #include "p2test.c"
 
 #define NUCLEUS_STACKPAGE_TOP 0x20001000
-#define DEVICE_NUM 49
-
 
 int processCount = 0;        //number of started but not yet terminated processes
 
@@ -19,11 +17,18 @@ pcb_t *readyQueue = mkEmptyProcQ();       //tail pointer to queue of ready proce
 
 pcb_t *currentProcess = NULL;   //pointer to pcb that is in running state
 
-semd_t deviceSemaphores[DEVICE_NUM] = {0};
+cpu_t startT;
+
+int deviceStat[DEVICE_NUM];
+
+int deviceSemaphores[DEVICE_NUM];
+
+#define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
 
 int main() {
     initPcbs();
     initASL();
+    initDevSemaphores();
     passupvector_t *passupVector = initPassupVector();      //todo rename passupVector to avoid ambiguity
     initFirstProcess();
     loadIntervalTimer(100000);
@@ -40,7 +45,7 @@ passupvector_t *initPassupVector() {
 }
 
 inline void loadIntervalTimer (unsigned int timeInMicroSecs) {
-    LDIT(timeInMicroSecs)
+    LDIT(timeInMicroSecs);
 }
 
 pcb_t *initFirstProcess() {
@@ -52,11 +57,17 @@ pcb_t *initFirstProcess() {
     setStatusBitToValue(state, STATUS_TE_BIT, 1); //enable local timer
     setStatusBitToValue(state, STATUS_KUp_BIT, 0); //kernel mode
     firstProcess->p_s.(memaddr)pc_epc = (memaddr)test; //set PC to test function
-    RAMTOP(firstProcess->p_s.reg_sp)    //side effect also sets the stackpointer
+    RAMTOP(firstProcess->p_s.reg_sp);    //side effect also sets the stackpointer
 
     firstProcess->p_time = 0;
     firstProcess->p_semAdd = NULL;
     firstProcess->p_supportStruct = NULL;
 
     return firstProcess;
+}
+
+void initDevSemaphores() {
+    for (int i = 0; i < (DEVICE_NUM); i++){
+        deviceSemaphores[i] = 0;
+    }
 }

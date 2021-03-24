@@ -13,7 +13,7 @@
 void scheduler() {
   pcb_t *p = removeProcQ(&readyQueue);
   if(p != NULL){
-    //STCK(startT);
+    STCK(startT);
     setTIMER(TIMESLICE);
     contextSwitch(p);
   }

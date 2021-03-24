@@ -108,7 +108,24 @@ void verhogen() {
 }
 
 int  wait_For_IO() {
+  int lineNumber = currentProcess -> p_s.reg_a1;
+  int deviceNumber = currentProcess -> p_s.reg_a2;
 
+  deviceNumber = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT);
+
+  if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){
+    deviceNumber = deviceNumber + DEVPERINT;
+  }
+
+  deviceSemaphores[deviceNumber]--;
+
+  if(deviceSemaphores[deviceNumber] < 0){
+    softBlockCount++;
+    blockCurrentProcessAt(&(deviceSemaphores[deviceNumber]));
+  } else {
+    currentProcess -> p_s.reg_v0  = deviceStat[deviceNumber];
+    contextSwitch(currentProcess);
+  }
 }
 
 int get_Cpu_Time() {
@@ -116,9 +133,6 @@ int get_Cpu_Time() {
 }
 
 int wait_For_Clock() {
-  //                                          ATTENZIONE
-  //definire clockSemaphore nell'init
-  int clockSemaphore = 0;
   clockSemaphore--;
   if(clockSemaphore < 0){
     softBlockCount++;
@@ -133,3 +147,11 @@ support_t *get_support_data() {
 }
 
 
+void blockCurrentProcessAt(int *sem){
+  cpu_t stopT;
+  STCK(stopT);
+  currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
+  insertBlocked(sem, currentProcess);
+  currentProcess = NULL;
+  scheduler();
+}
