@@ -29,7 +29,6 @@ void scheduler() {
   }
 }
 
-
 /*caso in cui lo scheduler decida di eseguire un altro processo. In tal caso salviamo il processo attuale e richiamiamo
 la funzione di exception handling del Bios (che ci è stata fornita) passando lo stato del processo corrente.
 */

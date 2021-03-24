@@ -60,6 +60,8 @@ void handleSystemcalls(){
 
 }
 
+/*serve a creare un processo come figlio del processo che invoca questa sys call*/
+
 int create_Process() {
     pcb_t *tmp = allocPcb();
 
@@ -80,12 +82,16 @@ int create_Process() {
     contextSwitch(currentProcess);
 }
 
+/*termina il processo invocante e tutta la sua progenie*/
+
 void terminate_Process(pcb_t *current) {
     while(!emptyChild(current)){
         terminate_Process(removeChild(current));
     }
     outChild(current);
 }
+
+/*operazione con cui si richiede la risorsa relativa ad un semaforo*/
 
 void passeren() {
   mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
@@ -94,6 +100,8 @@ void passeren() {
     blockCurrentProc(mutualExclusion);
   } else contextSwitch(currentProcess);
 }
+
+/*operazione con cui si rilascia la risorsa relativa ad un semaforo*/
 
 void verhogen() {
   mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
@@ -107,13 +115,17 @@ void verhogen() {
   contextSwitch(currentProcess);
 }
 
-int  wait_For_IO() {
-  int lineNumber = currentProcess -> p_s.reg_a1;
-  int deviceNumber = currentProcess -> p_s.reg_a2;
+/*
+blocca un processo fino al termine di un operazione di I/O 
+le operazioni di I/O necessitano di un tempo arbitrario, quindi il processo viene messo "in pausa"
+*/
 
+int  wait_For_IO() {
+  int lineNumber = currentProcess -> p_s.reg_a1;   //interrupt line number
+  int deviceNumber = currentProcess -> p_s.reg_a2;     //device instance
   deviceNumber = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT);
 
-  if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){
+  if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){     //distinzione tra lettura e scrittura nel caso di un terminale
     deviceNumber = deviceNumber + DEVPERINT;
   }
 
@@ -123,27 +135,34 @@ int  wait_For_IO() {
     softBlockCount++;
     blockCurrentProcessAt(&(deviceSemaphores[deviceNumber]));
   } else {
-    currentProcess -> p_s.reg_v0  = deviceStat[deviceNumber];
+    currentProcess -> p_s.reg_v0  = deviceStat[deviceNumber];     //ritorno il registro di stato del dispositivi richiesto
     contextSwitch(currentProcess);
   }
 }
 
-int get_Cpu_Time() {
+/*restituisce il tempo di esecuzione totale del processo che la invoca*/
+// nota: si tiene traccia del tempo all'interno dell'interrupt handler
 
+int get_Cpu_Time() {
+   currentProcess -> p_s.reg_v0 = currentProcess -> p_time;  
 }
+
+/*consente al processo invocante di "bloccarsi" in attesa di un giro dell'interval timer (prossimo tick del dispositivo)*/
 
 int wait_For_Clock() {
   clockSemaphore--;
   if(clockSemaphore < 0){
     softBlockCount++;
-    blockCurrentProc(&clockSemaphore);
+    blockCurrentProcessAt(&clockSemaphore);
   }
-
   contextSwitch(currentProcess);
 }
 
-support_t *get_support_data() {
+/*Restituisce un puntatore alla struttura di supporto del processo corrente*/
 
+support_t *get_support_data() {
+  //aggiungere controllo?
+  currentProcess -> p_s.reg_v0 = currentProcess -> p_supportStruct;
 }
 
 
