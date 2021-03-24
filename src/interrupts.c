@@ -10,10 +10,12 @@
 #define PLTINT 1
 #define INTERTIMEINT 2
 
-
+cpu_t stopT;
 
 void handleInterrupts() {
+    STCK(stopT);
     unsigned int cause = getCAUSE();
+    int timeLeft = getTIMER();
 
     while ((cause & CAUSE_IP_MASK) != 0) {  //check for pending interrupts
         if (cause & CAUSE_IP(PLTINT)){
@@ -33,16 +35,22 @@ void handleInterrupts() {
         }
 
         else if (cause & CAUSE_IP(NETWINT)) {
-            handleDeviceInterrupt(NETWINT)
+            handleDeviceInterrupt(NETWINT);
         }
 
         else if (cause & CAUSE_IP(PRNTINT)) {
-            handleDeviceInterrupt(PRNTINT)
+            handleDeviceInterrupt(PRNTINT);
         }
 
         else if (cause & CAUSE_IP(TERMINT)) {
-            handleDeviceInterrupt(TERMINT)
+            handleDeviceInterrupt(TERMINT);
         }
+    }
+    if(currentProcess != NULL){
+        //PANIC();
+        currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
+        copyStateInfo(((state_t*) BIOSDATAPAGE), &(currentProcess -> p_s));
+        prepareSwitch(currentProcess, timeLeft);
     }
 }
 

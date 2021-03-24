@@ -13,9 +13,7 @@
 void scheduler() {
   pcb_t *p = removeProcQ(&readyQueue);
   if(p != NULL){
-    STCK(startT);
-    setTIMER(TIMESLICE);
-    contextSwitch(p);
+    prepareSwitch(p, TIMESLICE);
   }
 
   if(processCount == 0){
@@ -45,5 +43,11 @@ void setStatusForWaiting() {
     setStatusBitToValue(&newState, STATUS_IEp_BIT, 1); //enable interrupts
     setStatusBitToValue(&newState, STATUS_TE_BIT, 0); //disable local timer
     setSTATUS(newState);
+}
+
+void prepareSwitch(pcb_t *p, int time) {
+  STCK(startT);
+  setTIMER(time);
+  contextSwitch(p);
 }
 
