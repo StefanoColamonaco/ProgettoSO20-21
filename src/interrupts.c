@@ -53,7 +53,7 @@ void handleInterrupts() {
         copyStateInfo((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
         prepareSwitch(currentProcess, timeLeft);
     }
-}
+}0
 
 void handlePLTInterrupt(int stopT) {
     if(currentProcess != NULL){
@@ -86,6 +86,16 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
     SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
+    /*
+    softBlockedCount--;
+    if(deviceSemaphore[deviceNum] <= 0){
+        pcb_t *tmp = removeBlocked(&deviceSemaphore[deviceNum]);
+        tmp -> p_s.reg_v0 = "qui il device status";
+        if(tmp != NULL){
+            insertProcQ(&readyQueue, tmp);
+        }
+    }    
+    */
     
 }
 
@@ -122,5 +132,5 @@ static unsigned int getSemNumber(interruptLine, deviceNo) {
 }
 
 static inline int terminalIsRECV(unsigned int *devBase) {
-    return *devBase != READY;
+    return devBase != READY;
 }
