@@ -4,6 +4,7 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
+#include "stateUtil.h"
 #include "interrupts.h"
 #include "systemCalls.h"
 
@@ -49,7 +50,7 @@ void handleInterrupts() {
     if(currentProcess != NULL){
         //PANIC();
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
-        copyStateInfo(((state_t*) BIOSDATAPAGE), &(currentProcess -> p_s));
+        copyStateInfo((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
         prepareSwitch(currentProcess, timeLeft);
     }
 }
@@ -63,22 +64,46 @@ void handleIntervalTimerInterrupt() {
 }
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
-    unsigned int deviceNo = getDeviceNo(interruptLine);
+    unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     unsigned int devAddrBase = DEV_REG_ADDR(interruptLine, deviceNo);
-    unsigned int savedStatus = *devAddrBase;
+    unsigned int savedStatus = *(unsigned int*)devAddrBase;
     acknowledgeInterrupt(devAddrBase);
-    verhogen();
-
+    SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
+    
 }
 
-unsigned int getDeviceNo(unsigned int interruptLine) {
+unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     unsigned int *bitmap = (memaddr)CDEV_BITMAP_ADDR(interruptLine);
     for (int i = 0; i < DEVPERINT; i++) {
-        if (*bitmap & 1U << i)
+        if ((*bitmap & 1U) << i == ON)
             return i;
     }
 }
 
 static inline void acknowledgeInterrupt(memaddr devBaseAddr) {
-    *(devBaseAddr + 0x4) = 1;
+    *(unsigned int*)(devBaseAddr + 0x4) = ACK;
+}
+
+static unsigned int getSemNumber(interruptLine, deviceNo) {
+    switch (interruptLine) {
+    case INTERTIMEINT:
+        return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO
+    
+    case DISKINT:
+    case FLASHINT:
+    case NETWINT:
+    case PRNTINT:
+        return (interruptLine - 3)*8 + deviceNo;
+
+    case TERMINT:
+        unsigned int devAddrBase = DEV_REG_ADDR(interruptLine, deviceNo);
+        if (terminalIsRECV(devAddrBase))
+            return (interruptLine - 3)*8 + deviceNo;
+        else 
+            return (interruptLine - 2)*8 + deviceNo;
+    }
+}
+
+static inline int terminalIsRECV(memaddr devAddrBase) {
+    return ( *(unsigned int*)devAddrBase != READY);
 }

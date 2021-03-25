@@ -2,7 +2,6 @@
 #define PROGETTOSO20_21_INTERRUPTS_H
 
 #include "init.h"
-#include "stateUtil.h"
 #include "scheduler.h"
 
 void handleInterrupts();
@@ -13,8 +12,12 @@ static void handleIntervalTimerInterrupt();
 
 static void handleDeviceInterrupt(unsigned int interruptLine);
 
-static unsigned int getDeviceNo(unsigned int interruptLine);
+static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
 
 static inline void acknowledgeInterrupt(memaddr devBaseAddr);
+
+static unsigned int getSemNumber(interruptLine, deviceNo);
+
+static inline int terminalIsRECV(memaddr devAddrBase);
 
 #endif
