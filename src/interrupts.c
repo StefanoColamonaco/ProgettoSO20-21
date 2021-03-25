@@ -65,9 +65,9 @@ void handleIntervalTimerInterrupt() {
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
-    unsigned int devAddrBase = DEV_REG_ADDR(interruptLine, deviceNo);
-    unsigned int savedStatus = *(unsigned int*)devAddrBase;
-    acknowledgeInterrupt(devAddrBase);
+    unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
+    unsigned int savedStatus = *devBase;
+    acknowledgeInterrupt(devBase);
     SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
     
 }
@@ -80,8 +80,8 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     }
 }
 
-static inline void acknowledgeInterrupt(memaddr devBaseAddr) {
-    *(unsigned int*)(devBaseAddr + 0x4) = ACK;
+static inline void acknowledgeInterrupt(unsigned int *devBase) {
+    *(devBase + 0x4) = ACK;
 }
 
 static unsigned int getSemNumber(interruptLine, deviceNo) {
@@ -104,6 +104,6 @@ static unsigned int getSemNumber(interruptLine, deviceNo) {
     }
 }
 
-static inline int terminalIsRECV(memaddr devAddrBase) {
-    return ( *(unsigned int*)devAddrBase != READY);
+static inline int terminalIsRECV(unsigned int *devBase) {
+    return *devBase != READY;
 }
