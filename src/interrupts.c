@@ -55,12 +55,29 @@ void handleInterrupts() {
     }
 }
 
-void handlePLTInterrupt() {
-
+void handlePLTInterrupt(int stopT) {
+    if(currentProcess != NULL){
+        currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
+        copyStateInfo(((state_t*)BIOSDATAPAGE), &(currentProcess -> p_s));
+        insertProcQ(&readyQueue, currentProcess);
+        scheduler();
+    } else {
+        PANIC();
+    }
 }
 
 void handleIntervalTimerInterrupt() {
-
+    LDIT(100000);
+    pcb_t *tmp = removeBlocked(&clockSemaphore);
+    while(tmp != NULL){
+        insertProcQ(&readyQueue, tmp);
+        softBlockCount++;
+        tmp = removeBlocked(&clockSemaphore);
+    }
+    clockSemaphore = 0;
+    if(currentProcess == NULL){
+        scheduler();
+    }
 }
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
