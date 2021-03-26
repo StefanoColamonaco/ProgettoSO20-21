@@ -1,3 +1,5 @@
+#include "exceptions.h"
+
 #include "pandos_const.h"
 #include "pandos_types.h"
 
@@ -5,7 +7,6 @@
 #include "scheduler.h"
 #include "asl.h"
 #include "pcb.h"
-#include "exceptions.h"
 #include "systemCalls.h"
 #include "interrupts.h"
 #include "stateUtil.h"

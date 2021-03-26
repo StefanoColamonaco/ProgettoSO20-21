@@ -58,7 +58,7 @@ pcb_t *initFirstProcess() {
     setStatusBitToValue(state->status, STATUS_TE_BIT, 1); //enable local timer
     setStatusBitToValue(state->status, STATUS_KUp_BIT, 0); //kernel mode
     state->pc_epc = (memaddr)test; //set PC to test function
-    RAMTOP(state->reg_sp);    //side effect also sets the stackpointer
+    RAMTOP(state->reg_sp);    //RAMTOP's side effect sets the stackpointer
 
     firstProcess->p_time = 0;
     firstProcess->p_semAdd = NULL;
