@@ -12,7 +12,7 @@
 
 extern int processCount;        //number of started but not yet terminated processes
 
-extern int softBlockCount;      //number of processes blocked due to I/O
+extern int softBlockedCount;      //number of processes blocked due to I/O
 
 extern pcb_t *readyQueue;       //tail pointer to queue of ready processes
 

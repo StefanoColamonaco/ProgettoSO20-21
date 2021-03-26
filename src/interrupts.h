@@ -20,4 +20,7 @@ static unsigned int getSemNumber(interruptLine, deviceNo);
 
 static inline int terminalIsRECV(unsigned int *devBase);
 
+/*UTILS*/
+void releaseSemAssociatedToDevice(int deviceNo, unsigned int status);
+
 #endif

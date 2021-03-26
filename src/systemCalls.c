@@ -146,7 +146,7 @@ int  wait_For_IO() {
   deviceSemaphores[deviceIndex]--;
 
   if(deviceSemaphores[deviceIndex] < 0){    //forse questo controlle è inutle
-    softBlockCount++;
+    softBlockedCount++;
     blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
     scheduler();
   }
@@ -166,7 +166,7 @@ int get_Cpu_Time() {
 int wait_For_Clock() {
   clockSemaphore--;
   if(clockSemaphore < 0) {
-    softBlockCount++;
+    softBlockedCount++;
     blockCurrentProcessAt(&clockSemaphore);
     scheduler();
   }

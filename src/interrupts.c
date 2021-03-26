@@ -20,7 +20,7 @@ void handleInterrupts() {
 
     while ((cause & CAUSE_IP_MASK) != 0) {  //check for pending interrupts
         if (cause & CAUSE_IP(PLTINT)){
-            handlePLTInterrupt();
+            handlePLTInterrupt(stopT);
         }
 
         else if (cause & CAUSE_IP(INTERTIMEINT)){
@@ -71,7 +71,7 @@ void handleIntervalTimerInterrupt() {
     pcb_t *tmp = removeBlocked(&clockSemaphore);
     while(tmp != NULL){
         insertProcQ(&readyQueue, tmp);
-        softBlockCount++;
+        softBlockedCount++;
         tmp = removeBlocked(&clockSemaphore);
     }
     clockSemaphore = 0;
@@ -85,26 +85,13 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
-    /*SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
-    pcb_t *unblockedPCB = headProcQ(readyQueue);
-    unblockedPCB->p_s.status = savedStatus;
-    LDST();*/
-    softBlockCount--;
-    if(deviceSemaphores[deviceNo] <= 0){
-        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
-        tmp -> p_s.reg_v0 = savedStatus;
-        if(tmp != NULL){
-            insertProcQ(&readyQueue, tmp);
-        }
-    }
+    releaseSemAssociatedToDevice(deviceNo, savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
     } else {
         contextSwitch(currentProcess);
     }
-
-    
 }
 
 unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
@@ -136,6 +123,18 @@ static unsigned int getSemNumber(interruptLine, deviceNo) {
             return (interruptLine - 3)*8 + deviceNo;
         else 
             return (interruptLine - 2)*8 + deviceNo;
+    }
+}
+
+/* is a V operation on the semaphore associated to the device number */
+void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
+    softBlockedCount--;
+    if(deviceSemaphores[deviceNo] <= 0){
+        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
+        tmp -> p_s.reg_v0 = status;
+        if(tmp != NULL){
+            insertProcQ(&readyQueue, tmp);
+        }
     }
 }
 

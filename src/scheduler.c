@@ -20,7 +20,7 @@ void scheduler() {
   if(processCount == 0){
     HALT();
   } else {
-    if(softBlockCount > 0){
+    if(softBlockedCount > 0){
       currentProcess = NULL;
       setStatusForWaiting();
       WAIT();

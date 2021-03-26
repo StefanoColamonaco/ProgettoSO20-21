@@ -12,7 +12,7 @@
 
 int processCount = 0;        //number of started but not yet terminated processes
 
-int softBlockCount = 0;      //number of processes blocked due to I/O
+int softBlockedCount = 0;      //number of processes blocked due to I/O
 
 pcb_t *readyQueue = NULL;       //tail pointer to queue of ready processes
 
