@@ -14,10 +14,10 @@ static void handleDeviceInterrupt(unsigned int interruptLine);
 
 static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
 
-static inline void acknowledgeInterrupt(memaddr devBaseAddr);
+static inline void acknowledgeInterrupt(unsigned int *devBase);
 
 static unsigned int getSemNumber(interruptLine, deviceNo);
 
-static inline int terminalIsRECV(memaddr devAddrBase);
+static inline int terminalIsRECV(unsigned int *devBase);
 
 #endif
