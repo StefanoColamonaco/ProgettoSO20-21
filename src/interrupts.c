@@ -85,20 +85,25 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
-    SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
+    /*SYSCALL(VERHOGEN, &deviceSemaphores[getSemNumber(interruptLine, deviceNo)], 0, 0);
     pcb_t *unblockedPCB = headProcQ(readyQueue);
     unblockedPCB->p_s.status = savedStatus;
-    LDST();
-    /*
-    softBlockedCount--;
-    if(deviceSemaphore[deviceNum] <= 0){
-        pcb_t *tmp = removeBlocked(&deviceSemaphore[deviceNum]);
-        tmp -> p_s.reg_v0 = "qui il device status";
+    LDST();*/
+    softBlockCount--;
+    if(deviceSemaphores[deviceNo] <= 0){
+        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
+        tmp -> p_s.reg_v0 = savedStatus;
         if(tmp != NULL){
             insertProcQ(&readyQueue, tmp);
         }
-    }    
-    */
+    }
+    startT = getTIMER();
+    if(currentProcess == NULL){
+        scheduler();
+    } else {
+        contextSwitch(currentProcess);
+    }
+
     
 }
 
