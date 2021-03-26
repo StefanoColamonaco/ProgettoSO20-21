@@ -9,6 +9,7 @@
 #include "stateUtil.h"
 
 #include <umps3/umps/libumps.h>
+#include <umps3/umps/cp0.h>
 
 void scheduler() {
   pcb_t *p = removeProcQ(&readyQueue);
@@ -38,9 +39,9 @@ void contextSwitch(pcb_t *current){
 }
 
 void setStatusForWaiting() {
-    state_t newState = (state_t)getSTATUS();
-    setStatusBitToValue(&newState, STATUS_IEp_BIT, 1); //enable interrupts
-    setStatusBitToValue(&newState, STATUS_TE_BIT, 0); //disable local timer
+    unsigned int newState = getSTATUS();
+    setStatusBitToValue(newState, STATUS_IEp_BIT, 1); //enable interrupts
+    setStatusBitToValue(newState, STATUS_TE_BIT, 0); //disable local timer
     setSTATUS(newState);
 }
 
