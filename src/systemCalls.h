@@ -6,20 +6,31 @@
 #include "pcb.h"
 #include "asl.h"
 
-extern int *mutualExclusion;      
+extern int *mutex;      
 
 /* System calls handler */
 void handleSystemcalls();
 
 /* System calls 1-8 */
 int create_Process();
+
 void terminate_Process();
+
 void passeren();
+
 void verhogen();
+
 int  wait_For_IO();
+
 int get_Cpu_Time();
+
 int wait_For_Clock();
+
+
+/*helper functions*/
 support_t *get_support_data();
+
+void blockCurrentProcessAt(int *sem);
 
 
 #endif //PROGETTOSO20_21_SYSTEMCALLS_H

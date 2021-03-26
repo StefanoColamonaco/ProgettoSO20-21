@@ -6,13 +6,16 @@
 #include "pcb.h"
 #include "stateUtil.h"
 
-int *mutualExclusion = 0;
+#include <umps3/umps/arch.h>
+#include <umps3/umps/libumps.h>
+
+
+int *mutex = 0;
 
 void handleSystemcalls(){
-
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    //in a0 (gpr[3]) troviamo il numero della sys call
-  if(systemState -> status & USERPON != 0){                      //processo in user mode -> trap/eccezione
+  if(systemState->status & USERPON){                      //processo in user mode -> trap/eccezione
     kill(GENERALEXCEPT);    
   }
 
@@ -22,96 +25,107 @@ void handleSystemcalls(){
   switch(currentSyscall){
     case CREATEPROCESS: {
       create_Process();
+      break;
     }
 
     case TERMPROCESS: {
       terminate_Process(currentProcess);
-      scheduler();                                  //terminato il processo si richiama lo scheduler
+      break;                                
     }
 
     case PASSEREN: {
       passeren();
+      break;
     }
 
     case VERHOGEN: {
       verhogen();
+      break;
     }
 
     case IOWAIT: {
       wait_For_IO();
+      break;
     }
 
     case GETTIME: {
         get_Cpu_Time();
+        break;
     }
 
     case CLOCKWAIT: {
       wait_For_Clock();
+      break;
     }
 
     case GETSUPPORTPTR: {
       get_Support_Data();
+      break;
     }
     // otherwise (sys call number > 8 or < 1)
     default: {
       kill(GENERALEXCEPT);
+      break;
     }
   }
 
 }
 
 /*serve a creare un processo come figlio del processo che invoca questa sys call*/
-
 int create_Process() {
     pcb_t *tmp = allocPcb();
 
     if(tmp == NULL) {
-        currentProcess -> p_s.reg_v0 = -1;                        /* non possiamo creare il processo, ritorniamo -1 */
-        return -1;
+        currentProcess->p_s.reg_v0 = -1;                        /* non possiamo creare il processo, ritorniamo -1 */
+        return -1;                                              //TODO check if return value il correct
     }
 
     copyStateInfo(&currentProcess -> p_s.reg_a1, &tmp -> p_s);    /* we copy the process into tmp and assign it the support structure if present*/
     support_t *supportData = currentProcess -> p_s.reg_a2;
-    if(supportData != NULL || supportData != 0) {
+    if(supportData != NULL && supportData != 0) {
         tmp -> p_supportStruct = supportData;
     }
+
     processCount++;
     insertProcQ(&readyQueue, tmp);
     insertChild(currentProcess, tmp);
-    currentProcess -> p_s.reg_v0 = 0;                                   //Since process is "ready", we can return 0 (ok)
+
+    currentProcess->p_s.reg_v0 = 0;                                //Since process is "ready", we can return 0 (ok)
     contextSwitch(currentProcess);
 }
 
 /*termina il processo invocante e tutta la sua progenie*/
-
 void terminate_Process(pcb_t *current) {
     while(!emptyChild(current)){
         terminate_Process(removeChild(current));
     }
     outChild(current);
+    scheduler();
 }
 
 /*operazione con cui si richiede la risorsa relativa ad un semaforo*/
-
 void passeren() {
-  mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
-  *mutualExclusion--;
-  if(*mutualExclusion < 0){
-    blockCurrentProc(mutualExclusion);
-  } else contextSwitch(currentProcess);
+  mutex = (int *) currentProcess -> p_s.reg_a1;
+  *mutex--;
+  if(*mutex < 0){
+    blockCurrentProc(mutex);        //TODO define function
+    scheduler();
+  } 
+  else {  
+    contextSwitch(currentProcess);
+  }
 }
 
 /*operazione con cui si rilascia la risorsa relativa ad un semaforo*/
-
 void verhogen() {
-  mutualExclusion = (int *) currentProcess -> p_s.reg_a1;
-  *mutualExclusion++;
-  if(*mutualExclusion <= 0){
-    pcb_t *tmp = removeBlocked(mutualExclusion);
+  mutex = (int *) currentProcess -> p_s.reg_a1;
+  *mutex++;
+  if(*mutex >= 0){
+    pcb_t *tmp = removeBlocked(mutex);
     if(tmp != NULL){
       insertProcQ(&readyQueue, tmp);
     }
-  }
+  }  
   contextSwitch(currentProcess);
 }
 
@@ -121,56 +135,56 @@ le operazioni di I/O necessitano di un tempo arbitrario, quindi il processo vien
 */
 
 int  wait_For_IO() {
-  int lineNumber = currentProcess -> p_s.reg_a1;   //interrupt line number
-  int deviceNumber = currentProcess -> p_s.reg_a2;     //device instance
-  deviceNumber = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT);
+  int lineNumber = currentProcess -> p_s.reg_a1;   
+  int deviceNumber = currentProcess -> p_s.reg_a2;
+  int deviceIndex = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT); //TODO use function declared in interrupts.h
 
   if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){     //distinzione tra lettura e scrittura nel caso di un terminale
-    deviceNumber = deviceNumber + DEVPERINT;
+    deviceIndex =+ DEVPERINT;
   }
 
-  deviceSemaphores[deviceNumber]--;
+  deviceSemaphores[deviceIndex]--;
 
-  if(deviceSemaphores[deviceNumber] < 0){
+  if(deviceSemaphores[deviceIndex] < 0){    //forse questo controlle è inutle
     softBlockCount++;
-    blockCurrentProcessAt(&(deviceSemaphores[deviceNumber]));
-  } else {
-    currentProcess -> p_s.reg_v0  = deviceStat[deviceNumber];     //ritorno il registro di stato del dispositivi richiesto
-    contextSwitch(currentProcess);
+    blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
+    scheduler();
   }
+//else {   questa parte non può mai verificarsi. Il device si blocca sempre per aspettare e aspetta l'interrupt
+//     //currentProcess -> p_s.reg_v0  = *(unsigned int*) DEV_REG_ADDR(lineNumber, deviceNumber);    //ritorno il registro di stato del dispositivi richiesto
+//     contextSwitch(currentProcess);
+//   }
 }
 
 /*restituisce il tempo di esecuzione totale del processo che la invoca*/
 // nota: si tiene traccia del tempo all'interno dell'interrupt handler
-
 int get_Cpu_Time() {
    currentProcess -> p_s.reg_v0 = currentProcess -> p_time;  
 }
 
 /*consente al processo invocante di "bloccarsi" in attesa di un giro dell'interval timer (prossimo tick del dispositivo)*/
-
 int wait_For_Clock() {
   clockSemaphore--;
-  if(clockSemaphore < 0){
+  if(clockSemaphore < 0) {
     softBlockCount++;
     blockCurrentProcessAt(&clockSemaphore);
+    scheduler();
   }
   contextSwitch(currentProcess);
 }
 
 /*Restituisce un puntatore alla struttura di supporto del processo corrente*/
-
 support_t *get_support_data() {
   //aggiungere controllo?
   currentProcess -> p_s.reg_v0 = currentProcess -> p_supportStruct;
 }
 
 
-void blockCurrentProcessAt(int *sem){
+void blockCurrentProcessAt(int *sem) {
   cpu_t stopT;
   STCK(stopT);
   currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
   insertBlocked(sem, currentProcess);
   currentProcess = NULL;
-  scheduler();
+  //scheduler();    side effect brutto se te lo dimentichi. Meglio chiamarlo espressamente
 }
