@@ -15,9 +15,10 @@
 #include <umps3/umps/libumps.h>
 
 
-void handleException() {
+void handleExceptions() {
     unsigned int cause = getCAUSE();
-    switch (CAUSE_GET_EXCCODE(cause)) {
+    unsigned int excCode = CAUSE_GET_EXCCODE(cause);
+    switch (excCode) {
         case EXC_INT:
             handleInterrupts();
             break;
@@ -32,7 +33,7 @@ void handleException() {
         case EXC_ADES:
         case EXC_IBE:
         case EXC_DBE:
-            //handleProgramTrap
+            passupOrDie(excCode);
             break;
 
         case EXC_SYS:
@@ -43,7 +44,7 @@ void handleException() {
         case EXC_RI:
         case EXC_CPU:
         case EXC_OV:
-            //handleprogramTrap
+            passupOrDie(excCode);
             break;
 
     }
