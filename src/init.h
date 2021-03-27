@@ -5,8 +5,6 @@
 
 #include "pandos_types.h"
 #include "pandos_const.h"
-#include "pcb.h"
-#include "asl.h"
 
 #define DEVICE_NUM 49
 
@@ -26,12 +24,7 @@ extern int deviceSemaphores[];
 
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
 
-/*Utility functions*/
-static passupvector_t initPassupVector();
 
-static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
-
-static pcb_t *initFirstProcess();
 
 
 

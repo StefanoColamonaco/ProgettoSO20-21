@@ -40,8 +40,8 @@ void contextSwitch(pcb_t *current){
 
 void setStatusForWaiting() {
     unsigned int newState = getSTATUS();
-    setStatusBitToValue(newState, STATUS_IEp_BIT, 1); //enable interrupts
-    setStatusBitToValue(newState, STATUS_TE_BIT, 0); //disable local timer
+    setStatusBitToValue(&newState, STATUS_IEp_BIT, 1); //enable interrupts
+    setStatusBitToValue(&newState, STATUS_TE_BIT, 0); //disable local timer
     setSTATUS(newState);
 }
 

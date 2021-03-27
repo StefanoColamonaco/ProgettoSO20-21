@@ -3,7 +3,7 @@
 #include "stateUtil.h"
 
 
-inline void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigned int value) {
+void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigned int value) {
    *status = (*status << bitPosition) & value;
 }
 

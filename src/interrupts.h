@@ -6,19 +6,6 @@
 
 void handleInterrupts();
 
-static void handlePLTInterrupt();
-
-static void handleIntervalTimerInterrupt();
-
-static void handleDeviceInterrupt(unsigned int interruptLine);
-
-static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
-
-static inline void acknowledgeInterrupt(unsigned int *devBase);
-
-static unsigned int getSemNumber(interruptLine, deviceNo);
-
-static inline int terminalIsRECV(unsigned int *devBase);
 
 /*UTILS*/
 void releaseSemAssociatedToDevice(int deviceNo, unsigned int status);

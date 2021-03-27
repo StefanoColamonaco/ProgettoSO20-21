@@ -50,7 +50,7 @@ void handleException() {
 }
 
 void TLBExceptionHandler() {
-    kill(PGFAULTEXCEPT);
+    passupOrDie(PGFAULTEXCEPT);
 }
 
 /*
@@ -59,7 +59,7 @@ altrimenti accediamo all'area di memoria (BIOSDATAPAGE) in cui il BIOS ha salvat
 system call fosse sollevata e diamo il controllo al BIOS exceptions handler
 (anche in questo caso terminiamo il processo e passiamo il controllo allo scheduler)
 */
-void kill(int exceptionType){
+void passupOrDie(int exceptionType){
   if(currentProcess -> p_supportStruct != NULL){                                  
     copyStateInfo((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
     LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_stackPtr,
@@ -73,9 +73,9 @@ void kill(int exceptionType){
 }
 
 //placeholder to replace in future implementations
-void uTLB_RefillHandler() {
+/* void uTLB_RefillHandler() {
     setENTRYHI(0x80000000);
     setENTRYLO(0x00000000);
     TLBWR();
-    LDST ((state_PTR) 0x0FFFF000);
-}
+    LDST ((STATE_PTR) 0x0FFFF000);
+} */

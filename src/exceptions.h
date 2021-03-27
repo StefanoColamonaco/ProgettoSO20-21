@@ -6,9 +6,9 @@ void handleExceptions();        //entry point for exceptions and interrupt handl
 
 void TLBExceptionHandler();       //handler for exception related to TLB (it kill the process witch exception PGFAULTEXCEPT)
 
-void kill(int exceptionType);     //detailed description in exception.c
+void passupOrDie(int exceptionType);     //detailed description in exception.c
 
-void uTLB_RefillHandler(); //placeholder
+//void uTLB_RefillHandler(); //placeholder
 
 
 

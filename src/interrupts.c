@@ -13,6 +13,22 @@
 
 cpu_t stopT;
 
+static void handlePLTInterrupt();
+
+static void handleIntervalTimerInterrupt();
+
+static void handleDeviceInterrupt(unsigned int interruptLine);
+
+static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
+
+static inline void acknowledgeInterrupt(unsigned int *devBase);
+
+static unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo);
+
+static inline int terminalIsRECV(unsigned int *devBase);
+
+
+
 void handleInterrupts() {
     STCK(stopT);
     unsigned int cause = getCAUSE();
@@ -85,7 +101,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
-    releaseSemAssociatedToDevice(deviceNo, savedStatus);
+    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
@@ -102,11 +118,11 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     }
 }
 
-static inline void acknowledgeInterrupt(unsigned int *devBase) {
+static void acknowledgeInterrupt(unsigned int *devBase) {
     *(devBase + 0x4) = ACK;
 }
 
-static unsigned int getSemNumber(interruptLine, deviceNo) {
+static unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
     switch (interruptLine) {
     case INTERTIMEINT:
         return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO
@@ -118,11 +134,13 @@ static unsigned int getSemNumber(interruptLine, deviceNo) {
         return (interruptLine - 3)*8 + deviceNo;
 
     case TERMINT:
+        ;       //stupid hack to allow declaration
         unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
         if (terminalIsRECV(devBase))
             return (interruptLine - 3)*8 + deviceNo;
         else 
             return (interruptLine - 2)*8 + deviceNo;
+        //TODO handle default case
     }
 }
 
@@ -138,6 +156,6 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     }
 }
 
-static inline int terminalIsRECV(unsigned int *devBase) {
+static int terminalIsRECV(unsigned int *devBase) {
     return *devBase != READY;
 }

@@ -16,7 +16,7 @@ void handleSystemcalls(){
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    //in a0 (gpr[3]) troviamo il numero della sys call
   if(systemState->status & USERPON){                      //processo in user mode -> trap/eccezione
-    kill(GENERALEXCEPT);    
+    passupOrDie(GENERALEXCEPT);    
   }
 
   copyStateInfo(systemState, &(currentProcess -> p_s));
@@ -59,12 +59,12 @@ void handleSystemcalls(){
     }
 
     case GETSUPPORTPTR: {
-      get_Support_Data();
+      get_support_data();
       break;
     }
     // otherwise (sys call number > 8 or < 1)
     default: {
-      kill(GENERALEXCEPT);
+      passupOrDie(GENERALEXCEPT);
       break;
     }
   }
@@ -80,8 +80,8 @@ int create_Process() {
         return -1;                                              //TODO check if return value il correct
     }
 
-    copyStateInfo(&currentProcess -> p_s.reg_a1, &tmp -> p_s);    /* we copy the process into tmp and assign it the support structure if present*/
-    support_t *supportData = currentProcess -> p_s.reg_a2;
+    copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    /* we copy the process into tmp and assign it the support structure if present*/
+    support_t *supportData = (support_t*)currentProcess -> p_s.reg_a2;
     if(supportData != NULL && supportData != 0) {
         tmp -> p_supportStruct = supportData;
     }
@@ -108,7 +108,7 @@ void passeren() {
   mutex = (int *) currentProcess -> p_s.reg_a1;
   *mutex--;
   if(*mutex < 0){
-    blockCurrentProc(mutex);        //TODO define function
+    blockCurrentProcessAt(mutex);        
     scheduler();
   } 
   else {  
@@ -176,7 +176,7 @@ int wait_For_Clock() {
 /*Restituisce un puntatore alla struttura di supporto del processo corrente*/
 support_t *get_support_data() {
   //aggiungere controllo?
-  currentProcess -> p_s.reg_v0 = currentProcess -> p_supportStruct;
+  currentProcess -> p_s.reg_v0 = (unsigned int)currentProcess->p_supportStruct;
 }
 
 

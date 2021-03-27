@@ -6,9 +6,10 @@ src_dir = src
 obj_dir = obj
 
 umps_flags = -ffreestanding -mips1 -mabi=32 -mno-gpopt -G 0 -mno-abicalls -fno-pic -mfp32
-umps_headers = -I/usr/include/umps3 -I/usr/include -I/usr/share/include -I/usr/share/include/umps3 -I/usr/local/include/umps3/ -I/usr/local/include/ -I.
+umps_headers = -I/usr/include -I/usr/share/include -I/usr/share -I/usr/local -I/usr/local/include 
+include_dirs = -I. $(umps_headers) $(addsuffix /umps3, $(umps_headers)) 
 compile_flags = -std=c11 -Wall -O0
-CFLAGS = $(umps_flags) $(compile_flags) $(umps_headers)
+CFLAGS = $(umps_flags) $(compile_flags) $(include_dirs)
 
 LD = mipsel-linux-gnu-ld
 LDFLAGS = -G 0 -nostdlib -T/usr/share/umps3/umpscore.ldscript
@@ -16,8 +17,11 @@ LDFLAGS = -G 0 -nostdlib -T/usr/share/umps3/umpscore.ldscript
 .SUFFIXES:
 .SUFFIXES: .h .c .o .S .umps
 
+phase1_objs = pcb.o asl.o
+phase2_objs = exceptions.o init.o interrupts.o scheduler.o stateUtil.o systemCalls.o
+test_obj = p2test.o
 pandos_headers = pandos_const.h pandos_types.h
-objects = $(addprefix obj/, pcb.o asl.o p1test.o crtso.o libumps.o)
+objects = $(addprefix obj/, crtso.o libumps.o $(test_obj) $(phase1_objs) $(phase2_objs))
 
 .PHONY = clean all
 
@@ -39,4 +43,4 @@ $(obj_dir) :
 	mkdir "$(obj_dir)"
 
 clean:
-	rm $(objects) kernel kernel.core.umps kernel.stab.umps
+	-rm  $(objects) kernel kernel.core.umps kernel.stab.umps 2> /dev/null
