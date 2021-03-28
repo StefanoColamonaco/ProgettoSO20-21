@@ -72,12 +72,11 @@ void handleSystemcalls(){
 }
 
 /*serve a creare un processo come figlio del processo che invoca questa sys call*/
-int create_Process() {
+void create_Process() {
     pcb_t *tmp = allocPcb();
 
     if(tmp == NULL) {
-        currentProcess->p_s.reg_v0 = -1;                        /* non possiamo creare il processo, ritorniamo -1 */
-        return -1;                                              //TODO check if return value il correct
+        currentProcess->p_s.reg_v0 = -1;                        /* non possiamo creare il processo, ritorniamo -1 */                                            //TODO check if return value il correct
     }
 
     copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    /* we copy the process into tmp and assign it the support structure if present*/
@@ -134,7 +133,7 @@ blocca un processo fino al termine di un operazione di I/O
 le operazioni di I/O necessitano di un tempo arbitrario, quindi il processo viene messo "in pausa"
 */
 
-int  wait_For_IO() {
+void  wait_For_IO() {
   int lineNumber = currentProcess -> p_s.reg_a1;   
   int deviceNumber = currentProcess -> p_s.reg_a2;
   int deviceIndex = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT); //TODO use function declared in interrupts.h
@@ -158,12 +157,12 @@ int  wait_For_IO() {
 
 /*restituisce il tempo di esecuzione totale del processo che la invoca*/
 // nota: si tiene traccia del tempo all'interno dell'interrupt handler
-int get_Cpu_Time() {
+void get_Cpu_Time() {
    currentProcess -> p_s.reg_v0 = currentProcess -> p_time;  
 }
 
 /*consente al processo invocante di "bloccarsi" in attesa di un giro dell'interval timer (prossimo tick del dispositivo)*/
-int wait_For_Clock() {
+void wait_For_Clock() {
   clockSemaphore--;
   if(clockSemaphore < 0) {
     softBlockedCount++;
@@ -174,9 +173,8 @@ int wait_For_Clock() {
 }
 
 /*Restituisce un puntatore alla struttura di supporto del processo corrente*/
-support_t *get_support_data() {
-  //aggiungere controllo?
-  currentProcess -> p_s.reg_v0 = (unsigned int)currentProcess->p_supportStruct;
+void get_support_data() {
+    currentProcess -> p_s.reg_v0 = (unsigned int)currentProcess->p_supportStruct;
 }
 
 

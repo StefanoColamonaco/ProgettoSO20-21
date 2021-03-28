@@ -12,7 +12,7 @@ extern int *mutex;
 void handleSystemcalls();
 
 /* System calls 1-8 */
-int create_Process();
+void  create_Process();
 
 void terminate_Process();
 
@@ -20,15 +20,15 @@ void passeren();
 
 void verhogen();
 
-int  wait_For_IO();
+void  wait_For_IO();
 
-int get_Cpu_Time();
+void get_Cpu_Time();
 
-int wait_For_Clock();
+void wait_For_Clock();
 
 
 /*helper functions*/
-support_t *get_support_data();
+void get_support_data();
 
 void blockCurrentProcessAt(int *sem);
 
