@@ -148,11 +148,10 @@ void  wait_For_IO() {
     softBlockedCount++;
     blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
     scheduler();
+  }else {
+      currentProcess -> p_s.reg_v0  = *(unsigned int*) DEV_REG_ADDR(lineNumber, deviceNumber);    //ritorno il registro di stato del dispositivi richiesto
+      contextSwitch(currentProcess);
   }
-//else {   questa parte non può mai verificarsi. Il device si blocca sempre per aspettare e aspetta l'interrupt
-//     //currentProcess -> p_s.reg_v0  = *(unsigned int*) DEV_REG_ADDR(lineNumber, deviceNumber);    //ritorno il registro di stato del dispositivi richiesto
-//     contextSwitch(currentProcess);
-//   }
 }
 
 /*restituisce il tempo di esecuzione totale del processo che la invoca*/

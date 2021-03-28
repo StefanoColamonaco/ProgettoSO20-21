@@ -12,6 +12,7 @@
 #include <umps3/umps/cp0.h>
 
 void scheduler() {
+
   pcb_t *p = removeProcQ(&readyQueue);
   if(p != NULL){
     prepareSwitch(p, TIMESLICE);
@@ -39,6 +40,7 @@ void contextSwitch(pcb_t *current){
 }
 
 void setStatusForWaiting() {
+    setTIMER((unsigned int) 0xFFFFFFFF);
     unsigned int newState = getSTATUS();
     setStatusBitToValue(&newState, STATUS_IEp_BIT, 1); //enable interrupts
     setStatusBitToValue(&newState, STATUS_TE_BIT, 0); //disable local timer
