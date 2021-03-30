@@ -5,6 +5,7 @@
 #include "asl.h"
 #include "pcb.h"
 #include "stateUtil.h"
+#include "interrupts.h"
 
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
@@ -136,22 +137,16 @@ le operazioni di I/O necessitano di un tempo arbitrario, quindi il processo vien
 void  wait_For_IO() {
   int lineNumber = currentProcess -> p_s.reg_a1;   
   int deviceNumber = currentProcess -> p_s.reg_a2;
-  int deviceIndex = deviceNumber + ((lineNumber - DISKINT) * DEVPERINT); //TODO use function declared in interrupts.h
+  unsigned int deviceIndex = getSemNumber(lineNumber, deviceNumber);
 
   if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){     //distinzione tra lettura e scrittura nel caso di un terminale
     deviceIndex =+ DEVPERINT;
   }
 
   deviceSemaphores[deviceIndex]--;
-
-  if(deviceSemaphores[deviceIndex] < 0){    //forse questo controlle è inutle
-    softBlockedCount++;
-    blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
-    scheduler();
-  }else {
-      currentProcess -> p_s.reg_v0  = *(unsigned int*) DEV_REG_ADDR(lineNumber, deviceNumber);    //ritorno il registro di stato del dispositivi richiesto
-      contextSwitch(currentProcess);
-  }
+  softBlockedCount++;
+  blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
+  scheduler();
 }
 
 /*restituisce il tempo di esecuzione totale del processo che la invoca*/
@@ -183,5 +178,4 @@ void blockCurrentProcessAt(int *sem) {
   currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
   insertBlocked(sem, currentProcess);
   currentProcess = NULL;
-  //scheduler();    side effect brutto se te lo dimentichi. Meglio chiamarlo espressamente
 }

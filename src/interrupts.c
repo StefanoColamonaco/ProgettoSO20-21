@@ -23,8 +23,6 @@ static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
 
 static inline void acknowledgeInterrupt(unsigned int *devBase);
 
-static unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo);
-
 static inline int terminalIsRECV(unsigned int *devBase);
 
 
@@ -61,6 +59,7 @@ void handleInterrupts() {
 
         else if (cause & CAUSE_IP(TERMINT)) {
             handleDeviceInterrupt(TERMINT);
+            terminalInterrupt(TERMINT);
         }
     }
     if(currentProcess != NULL){
@@ -122,7 +121,7 @@ static void acknowledgeInterrupt(unsigned int *devBase) {
     *(devBase + 0x4) = ACK;
 }
 
-static unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
+unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
     switch (interruptLine) {
     case INTERTIMEINT:
         return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO
@@ -158,4 +157,20 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
 
 static int terminalIsRECV(unsigned int *devBase) {
     return *devBase != READY;
+}
+
+void flashInterrupts(int lineNum){
+
+}
+
+void networkInterrupts(int lineNum){
+
+}
+
+void printerInterrupts(int lineNum){
+
+}
+
+void terminalInterrupts(int lineNum){
+
 }
