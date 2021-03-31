@@ -56,7 +56,7 @@ int main() {
         setStatusBitToValue(&state->status, STATUS_TE_BIT, 1); //enable local timer
         setStatusBitToValue(&state->status, STATUS_KUp_BIT, 0); //kernel mode
 
-        state->reg_sp = ramTop;    //RAMTOP's side effect sets the stackpointer
+        state->reg_sp = ramTop;    
 
         firstProcess->p_time = 0;
         firstProcess->p_semAdd = NULL;

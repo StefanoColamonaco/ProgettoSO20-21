@@ -4,7 +4,10 @@
 
 
 void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigned int value) {
-   *status = (*status << bitPosition) & value;
+    if (value)
+        *status |= 1U << bitPosition;
+    else
+        *status &= ~(1U << bitPosition);
 }
 
 void copyStateInfo(state_t *src, state_t *dest){

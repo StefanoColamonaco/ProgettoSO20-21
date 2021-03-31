@@ -25,6 +25,8 @@ static inline void acknowledgeInterrupt(unsigned int *devBase);
 
 static inline int terminalIsRECV(unsigned int *devBase);
 
+static inline int terminalIsTRANSM(unsigned int *devBase);
+
 
 
 void handleInterrupts() {
@@ -59,11 +61,10 @@ void handleInterrupts() {
 
         else if (cause & CAUSE_IP(TERMINT)) {
             handleDeviceInterrupt(TERMINT);
-            terminalInterrupt(TERMINT);
         }
+        cause = getCAUSE();
     }
     if(currentProcess != NULL){
-        //PANIC();
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
         copyStateInfo((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
         prepareSwitch(currentProcess, timeLeft);
@@ -98,6 +99,9 @@ void handleIntervalTimerInterrupt() {
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
+    if (interruptLine == TERMINT && !terminalIsRECV(devBase)) {
+        devBase += 0x08;
+    }
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
     releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo), savedStatus);
@@ -114,6 +118,18 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     for (int i = 0; i < DEVPERINT; i++) {
         if ((*bitmap & 1U) << i == ON)
             return i;
+    }
+}
+
+/* is a V operation on the semaphore associated to the device number */
+void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
+    softBlockedCount--;
+    if(deviceSemaphores[deviceNo] <= 0){
+        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
+        if(tmp != NULL){
+            tmp -> p_s.reg_v0 = status;
+            insertProcQ(&readyQueue, tmp);
+        }
     }
 }
 
@@ -143,20 +159,13 @@ unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
     }
 }
 
-/* is a V operation on the semaphore associated to the device number */
-void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
-    softBlockedCount--;
-    if(deviceSemaphores[deviceNo] <= 0){
-        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
-        tmp -> p_s.reg_v0 = status;
-        if(tmp != NULL){
-            insertProcQ(&readyQueue, tmp);
-        }
-    }
-}
 
 static int terminalIsRECV(unsigned int *devBase) {
     return *devBase != READY;
+}
+
+static int terminalIsTRANSM(unsigned int *devBase) {
+    return *devBase + 0x08 != READY;
 }
 
 void flashInterrupts(int lineNum){
