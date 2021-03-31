@@ -24,7 +24,7 @@ int deviceSemaphores[DEVICE_NUM];   //starting from line 3 up to 6. then 8 devs 
 static inline void initDevSemaphores();
 static passupvector_t *initPassupVector();
 static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
-static pcb_t *initFirstProcess();
+//static pcb_t *initFirstProcess();
 
 extern void uTLB_RefillHandler();
 

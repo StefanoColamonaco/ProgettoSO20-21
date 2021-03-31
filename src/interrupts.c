@@ -59,7 +59,7 @@ void handleInterrupts() {
 
         else if (cause & CAUSE_IP(TERMINT)) {
             handleDeviceInterrupt(TERMINT);
-            terminalInterrupt(TERMINT);
+            terminalInterrupts(TERMINT);
         }
     }
     if(currentProcess != NULL){
@@ -172,5 +172,7 @@ void printerInterrupts(int lineNum){
 }
 
 void terminalInterrupts(int lineNum){
+    //unsigned int deviceNo = getDeviceNoFromLine(lineNum);
+    //unsigned int *devBase = DEV_REG_ADDR(lineNum, deviceNo);
 
 }
