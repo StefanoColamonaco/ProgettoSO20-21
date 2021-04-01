@@ -27,9 +27,10 @@ static inline int terminalIsRECV(unsigned int *devBase);
 
 static inline int terminalIsTRANSM(unsigned int *devBase);
 
-
+unsigned int devBaseTest;
 
 void handleInterrupts() {
+    devBaseTest = DEV_REG_ADDR(7, getDeviceNoFromLine(7));
     STCK(stopT);
     unsigned int cause = getCAUSE();
     int timeLeft = getTIMER();
@@ -99,12 +100,14 @@ void handleIntervalTimerInterrupt() {
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
-    if (interruptLine == TERMINT && !terminalIsRECV(devBase)) {
-        devBase += 0x08;
+    int termIsTRANSM = 0;
+    if (interruptLine == TERMINT && terminalIsTRANSM(devBase)) {
+        termIsTRANSM = 1;
+        devBase += 0x8U;
     }
     unsigned int savedStatus = *devBase;
     acknowledgeInterrupt(devBase);
-    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo), savedStatus);
+    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, termIsTRANSM), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
@@ -116,7 +119,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
 unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     unsigned int *bitmap = (memaddr)CDEV_BITMAP_ADDR(interruptLine);
     for (int i = 0; i < DEVPERINT; i++) {
-        if ((*bitmap & 1U) << i == ON)
+        if ((*bitmap >> i) & 1U == ON)
             return i;
     }
 }
@@ -134,10 +137,10 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
 }
 
 static void acknowledgeInterrupt(unsigned int *devBase) {
-    *(devBase + 0x4) = ACK;
+    *(devBase + 0x4U) = ACK;
 }
 
-unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
+unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM) {
     switch (interruptLine) {
     case INTERTIMEINT:
         return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO
@@ -146,15 +149,14 @@ unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo) {
     case FLASHINT:
     case NETWINT:
     case PRNTINT:
-        return (interruptLine - 3)*8 + deviceNo;
+        return (interruptLine - DISKINT)*8 + deviceNo;
 
     case TERMINT:
-        ;       //stupid hack to allow declaration
-        unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
-        if (terminalIsRECV(devBase))
-            return (interruptLine - 3)*8 + deviceNo;
+        if (termIsTRANSM)
+            return (interruptLine - DISKINT + 1)*8 + deviceNo;
         else 
-            return (interruptLine - 2)*8 + deviceNo;
+            return (interruptLine - DISKINT)*8 + deviceNo;
+            
         //TODO handle default case
     }
 }
@@ -165,7 +167,7 @@ static int terminalIsRECV(unsigned int *devBase) {
 }
 
 static int terminalIsTRANSM(unsigned int *devBase) {
-    return *devBase + 0x08 != READY;
+    return *(devBase + 0x8U) != READY;
 }
 
 void flashInterrupts(int lineNum){
@@ -181,7 +183,5 @@ void printerInterrupts(int lineNum){
 }
 
 void terminalInterrupts(int lineNum){
-    //unsigned int deviceNo = getDeviceNoFromLine(lineNum);
-    //unsigned int *devBase = DEV_REG_ADDR(lineNum, deviceNo);
 
 }

@@ -137,12 +137,7 @@ le operazioni di I/O necessitano di un tempo arbitrario, quindi il processo vien
 void  wait_For_IO() {
   int lineNumber = currentProcess -> p_s.reg_a1;   
   int deviceNumber = currentProcess -> p_s.reg_a2;
-  unsigned int deviceIndex = getSemNumber(lineNumber, deviceNumber);
-
-  if((lineNumber == TERMINT) && (currentProcess -> p_s.reg_a3)){     //distinzione tra lettura e scrittura nel caso di un terminale
-    deviceIndex =+ DEVPERINT;
-  }
-
+  unsigned int deviceIndex = getSemNumber(lineNumber, deviceNumber, !currentProcess->p_s.reg_a3);
   deviceSemaphores[deviceIndex]--;
   softBlockedCount++;
   blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));
