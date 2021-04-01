@@ -27,10 +27,12 @@ static inline int terminalIsRECV(unsigned int *devBase);
 
 static inline int terminalIsTRANSM(unsigned int *devBase);
 
-unsigned int devBaseTest;
+
+void AO(){
+
+}
 
 void handleInterrupts() {
-    devBaseTest = DEV_REG_ADDR(7, getDeviceNoFromLine(7));
     STCK(stopT);
     unsigned int cause = getCAUSE();
     int timeLeft = getTIMER();
@@ -100,13 +102,15 @@ void handleIntervalTimerInterrupt() {
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
+    unsigned int interruptDevLine = 0;
+    int termIsTRANSM = 0;
+    /*
     int termIsTRANSM = 0;
     if (interruptLine == TERMINT && terminalIsTRANSM(devBase)) {
         termIsTRANSM = 1;
         devBase += 0x8U;
-    }
-    unsigned int savedStatus = *devBase;
-    acknowledgeInterrupt(devBase);
+    }*/
+    unsigned int savedStatus = acknowledgeInterruptAndGetDeviceState(interruptLine, interruptDevLine, deviceNo);
     releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, termIsTRANSM), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
@@ -136,8 +140,40 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     }
 }
 
-static void acknowledgeInterrupt(unsigned int *devBase) {
-    *(devBase + 0x4U) = ACK;
+unsigned int acknowledgeInterruptAndGetDeviceState(unsigned int interruptLine, unsigned int interruptDevLine, unsigned int deviceNo) {
+    //*(devBase + 0x4U) = ACK;
+    unsigned int deviceTransmStatus;
+    volatile devregarea_t *tmp = (devregarea_t *) RAMBASEADDR;
+    unsigned int interruptBitMap = tmp -> interrupt_dev[interruptLine - DISKINT];
+
+    if(&(interruptBitMap) == NULL){
+        PANIC();
+    }
+    switch (deviceNo) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6: {
+            /*caso per altri devices*/
+            break;
+        }
+        case 7: {
+            deviceTransmStatus = tmp -> devreg[interruptDevLine][deviceNo].term.transm_status;
+            if((deviceTransmStatus & 0x0F) != 1){
+                tmp -> devreg[interruptDevLine][deviceNo].term.transm_command = ACK;
+            } else {
+                tmp -> devreg[interruptDevLine][deviceNo].term.recv_command = ACK;
+            }
+            break;
+        }
+        default: {
+            PANIC();
+        }
+    }
+    return deviceTransmStatus;
 }
 
 unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM) {
