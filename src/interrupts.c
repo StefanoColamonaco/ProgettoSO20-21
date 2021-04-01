@@ -110,7 +110,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
         termIsTRANSM = 1;
         devBase += 0x8U;
     }*/
-    unsigned int savedStatus = acknowledgeInterruptAndGetDeviceState(interruptLine, interruptDevLine, deviceNo);
+    int savedStatus = acknowledgeInterruptAndGetDeviceState(interruptLine, interruptDevLine, deviceNo);
     releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, termIsTRANSM), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
@@ -140,7 +140,11 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     }
 }
 
-unsigned int acknowledgeInterruptAndGetDeviceState(unsigned int interruptLine, unsigned int interruptDevLine, unsigned int deviceNo) {
+void acknowledgeInterrupt(unsigned int *devBase) {
+    *(devBase + 0x4U) = ACK;
+}
+
+int acknowledgeInterruptAndGetDeviceState(unsigned int interruptLine, unsigned int interruptDevLine, unsigned int deviceNo) {
     //*(devBase + 0x4U) = ACK;
     unsigned int deviceTransmStatus;
     volatile devregarea_t *tmp = (devregarea_t *) RAMBASEADDR;
