@@ -124,6 +124,7 @@ pcb_t *removeBlocked(int *semAdd){
             tmp_emptyProcQueue -> s_procQ = mkEmptyProcQ();
             freeSemd(tmp_emptyProcQueue);
         }
+        removed -> p_semAdd = NULL;
         return removed;
     } else return NULL;
 }

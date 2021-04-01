@@ -51,11 +51,12 @@ int main() {
         state->reg_t9 = (memaddr)test;
         state->pc_epc = state->reg_t9; //set PC to test function
 
-        //todo consider refactoring for clarity
+        /*//todo consider refactoring for clarity
         setStatusBitToValue(&state->status, STATUS_IEp_BIT, 0); //disables interrupts
         setStatusBitToValue(&state->status, STATUS_TE_BIT, 1); //enable local timer
         setStatusBitToValue(&state->status, STATUS_KUp_BIT, 0); //kernel mode
-
+*/
+        firstProcess->p_s.status = ALLOFF | IECON | IMON | TEBITON;
         state->reg_sp = ramTop;    //RAMTOP's side effect sets the stackpointer
 
         firstProcess->p_time = 0;

@@ -41,8 +41,8 @@ void contextSwitch(pcb_t *current){
 
 void setStatusForWaiting() {
     setTIMER((unsigned int) 0xFFFFFFFF);
-    unsigned int newState;
-    setStatusBitToValue(&newState, STATUS_KUc_BIT, 0);  //processor in kernel mode
+    unsigned int newState = ALLOFF | IECON | IMON;
+    /*setStatusBitToValue(&newState, STATUS_KUc_BIT, 0);  //processor in kernel mode
     setStatusBitToValue(&newState, STATUS_IEc_BIT, 1);  //enable interrupts
     setStatusBitToValue(&newState, STATUS_TE_BIT, 0);   //disable local timer
     setStatusBitToValue(&newState, STATUS_IM_BIT(0), 1);
@@ -52,7 +52,7 @@ void setStatusForWaiting() {
     setStatusBitToValue(&newState, STATUS_IM_BIT(4), 1);
     setStatusBitToValue(&newState, STATUS_IM_BIT(5), 1);
     setStatusBitToValue(&newState, STATUS_IM_BIT(6), 1);
-    setStatusBitToValue(&newState, STATUS_IM_BIT(7), 1);
+    setStatusBitToValue(&newState, STATUS_IM_BIT(7), 1);*/
 
     setSTATUS(newState);
 }
