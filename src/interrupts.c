@@ -136,6 +136,7 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
         if(tmp != NULL){
             tmp -> p_s.reg_v0 = status;
             insertProcQ(&readyQueue, tmp);
+            deviceSemaphores[deviceNo]++;
         }
     }
 }
