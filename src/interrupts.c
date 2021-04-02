@@ -21,16 +21,19 @@ static void handleDeviceInterrupt(unsigned int interruptLine);
 
 static unsigned int getDeviceNoFromLine(unsigned int interruptLine);
 
-static inline void acknowledgeInterrupt(unsigned int *devBase);
+static inline void acknowledgeDTPInterrupt(dtpreg_t *dev);
 
-static inline int terminalIsRECV(unsigned int *devBase);
+static inline void acknowledgeTermInterrupt(termreg_t *dev);
+
+static inline int terminalIsRECV(termreg_t dev);
 
 static inline int terminalIsTRANSM(unsigned int *devBase);
 
-unsigned int devBaseTest;
+static inline unsigned int getTermStatus(termreg_t dev);
+
+
 
 void handleInterrupts() {
-    devBaseTest = DEV_REG_ADDR(7, getDeviceNoFromLine(7));
     STCK(stopT);
     unsigned int cause = getCAUSE();
     int timeLeft = getTIMER();
@@ -99,15 +102,16 @@ void handleIntervalTimerInterrupt() {
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
-    unsigned int *devBase = DEV_REG_ADDR(interruptLine, deviceNo);
-    int termIsTRANSM = 0;
-    if (interruptLine == TERMINT && terminalIsTRANSM(devBase)) {
-        termIsTRANSM = 1;
-        devBase += 0x8U;
+    devreg_t *dev = DEV_REG_ADDR(interruptLine, deviceNo);
+    unsigned int savedStatus = 0;
+    if (interruptLine == TERMINT) {
+        savedStatus = getTermStatus(dev->term);
+        acknowledgeTermInterrupt(&dev->term);
+    } else {
+        savedStatus = dev->dtp.status;
+        acknowledgeDTPInterrupt(&dev->dtp);
     }
-    unsigned int savedStatus = *devBase;
-    acknowledgeInterrupt(devBase);
-    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, termIsTRANSM), savedStatus);
+    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, terminalIsRECV(dev->term)), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
@@ -136,11 +140,27 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     }
 }
 
-static void acknowledgeInterrupt(unsigned int *devBase) {
-    *(devBase + 0x4U) = ACK;
+static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
+    dev->command = ACK;
 }
 
-unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM) {
+static void acknowledgeTermInterrupt(termreg_t *dev) {
+    if(terminalIsRECV) {
+        dev->recv_command = ACK;
+    } else {
+        dev->transm_command = ACK;
+    }
+}
+
+static inline unsigned int getTermStatus(termreg_t dev) {
+    if (terminalIsRECV) {
+        return dev.recv_status;
+    } else {
+        return dev.transm_status;
+    }
+}
+
+unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV) {
     switch (interruptLine) {
     case INTERTIMEINT:
         return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO
@@ -152,36 +172,16 @@ unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int
         return (interruptLine - DISKINT)*8 + deviceNo;
 
     case TERMINT:
-        if (termIsTRANSM)
-            return (interruptLine - DISKINT + 1)*8 + deviceNo;
-        else 
+        if (termIsRECV)
             return (interruptLine - DISKINT)*8 + deviceNo;
+        else 
+            return (interruptLine - DISKINT + 1)*8 + deviceNo;
             
         //TODO handle default case
     }
 }
 
 
-static int terminalIsRECV(unsigned int *devBase) {
-    return *devBase != READY;
-}
-
-static int terminalIsTRANSM(unsigned int *devBase) {
-    return *(devBase + 0x8U) != READY;
-}
-
-void flashInterrupts(int lineNum){
-
-}
-
-void networkInterrupts(int lineNum){
-
-}
-
-void printerInterrupts(int lineNum){
-
-}
-
-void terminalInterrupts(int lineNum){
-
+static int terminalIsRECV(termreg_t dev) {
+    return dev.recv_status != READY;
 }
