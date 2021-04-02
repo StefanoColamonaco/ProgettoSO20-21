@@ -145,7 +145,7 @@ static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
 }
 
 static void acknowledgeTermInterrupt(termreg_t *dev) {
-    if(terminalIsRECV) {
+    if(terminalIsRECV(*dev)) {
         dev->recv_command = ACK;
     } else {
         dev->transm_command = ACK;
@@ -153,7 +153,7 @@ static void acknowledgeTermInterrupt(termreg_t *dev) {
 }
 
 static inline unsigned int getTermStatus(termreg_t dev) {
-    if (terminalIsRECV) {
+    if (terminalIsRECV(dev)) {
         return dev.recv_status;
     } else {
         return dev.transm_status;
