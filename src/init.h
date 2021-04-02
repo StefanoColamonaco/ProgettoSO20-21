@@ -18,8 +18,6 @@ extern pcb_t *currentProcess;   //pointer to pcb that is in running state
 
 extern cpu_t startT;
 
-extern int deviceStat[];
-
 extern int deviceSemaphores[];
 
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
