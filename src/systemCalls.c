@@ -121,15 +121,15 @@ void passeren() {
 /*operazione con cui si rilascia la risorsa relativa ad un semaforo*/
 void verhogen() {
   mutex = (int*)(currentProcess -> p_s.reg_a1);
-  if((*mutex)+1 > 0){
+  //if((*mutex)+1 > 0){
     pcb_t *tmp = removeBlocked(mutex); ///se rimane la lista vuota allora incremento
     if(tmp != NULL){
       insertProcQ(&readyQueue, tmp);
     }
     if(headBlocked(mutex) == NULL) {
-      (*mutex) = (*mutex)+1;
+        (*mutex) = (*mutex)+1;
     }
-  }  
+  //}  
   contextSwitch(currentProcess);
 }
 
@@ -173,6 +173,7 @@ void wait_For_Clock() {
 /*Restituisce un puntatore alla struttura di supporto del processo corrente*/
 void get_support_data() {
     currentProcess -> p_s.reg_v0 = (unsigned int)currentProcess->p_supportStruct;
+    contextSwitch(currentProcess);
 }
 
 
