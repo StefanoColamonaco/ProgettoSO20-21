@@ -146,6 +146,7 @@ pcb_t *outBlocked(pcb_t *p){
       tmp_emptyProcQueue -> s_procQ = mkEmptyProcQ();
       freeSemd(tmp_emptyProcQueue);
     }
+    releasedPcb -> p_semAdd = NULL;
     return releasedPcb;
 }
 
