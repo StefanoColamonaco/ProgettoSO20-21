@@ -134,6 +134,19 @@ static unsigned int getTermStatus(termreg_t dev) {
     }
 }
 
+/* is a V operation on the semaphore associated to the device number */
+void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
+    softBlockedCount--;
+    if(deviceSemaphores[deviceNo] <= 0){
+        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
+        if(tmp != NULL){
+            tmp -> p_s.reg_v0 = status;
+            insertProcQ(&readyQueue, tmp);
+            deviceSemaphores[deviceNo]++;
+        }
+    }
+}
+
 static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
     dev->command = ACK;
 }
@@ -150,17 +163,6 @@ static int terminalIsRECV(termreg_t dev) {
     return dev.recv_status != READY;
 }
 
-/* is a V operation on the semaphore associated to the device number */
-void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
-    softBlockedCount--;
-    if(deviceSemaphores[deviceNo] <= 0){
-        pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
-        if(tmp != NULL){
-            tmp -> p_s.reg_v0 = status;
-            insertProcQ(&readyQueue, tmp);
-        }
-    }
-}
 
 unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV) {
     switch (interruptLine) {

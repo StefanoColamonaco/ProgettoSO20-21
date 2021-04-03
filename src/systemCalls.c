@@ -105,8 +105,8 @@ void terminate_Process(pcb_t *current) {
 
 /*operazione con cui si richiede la risorsa relativa ad un semaforo*/
 void passeren() {
-  mutex = (int *) currentProcess -> p_s.reg_a1;
-  *mutex--;
+  mutex = (int*)(currentProcess -> p_s.reg_a1);
+  (*mutex) = (*mutex)-1;
   if(*mutex < 0){
     blockCurrentProcessAt(mutex);        
     scheduler();
@@ -118,8 +118,8 @@ void passeren() {
 
 /*operazione con cui si rilascia la risorsa relativa ad un semaforo*/
 void verhogen() {
-  mutex = (int *) currentProcess -> p_s.reg_a1;
-  *mutex++;
+  mutex = (int*)(currentProcess -> p_s.reg_a1);
+  (*mutex) = (*mutex)+1;
   if(*mutex >= 0){
     pcb_t *tmp = removeBlocked(mutex);
     if(tmp != NULL){
@@ -147,7 +147,12 @@ void  wait_For_IO() {
 /*restituisce il tempo di esecuzione totale del processo che la invoca*/
 // nota: si tiene traccia del tempo all'interno dell'interrupt handler
 void get_Cpu_Time() {
-   currentProcess -> p_s.reg_v0 = currentProcess -> p_time;  
+  cpu_t stopT;
+  STCK(stopT);
+  currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
+  currentProcess -> p_s.reg_v0 = currentProcess -> p_time;  
+  startT = stopT;
+  contextSwitch(currentProcess);
 }
 
 /*consente al processo invocante di "bloccarsi" in attesa di un giro dell'interval timer (prossimo tick del dispositivo)*/

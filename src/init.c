@@ -18,8 +18,7 @@ int softBlockedCount = 0;      //number of processes blocked due to I/O
 pcb_t *readyQueue = NULL;       //tail pointer to queue of ready processes
 pcb_t *currentProcess;   //pointer to pcb that is in running state
 cpu_t startT;
-int deviceStat[DEVICE_NUM];
-int deviceSemaphores[DEVICE_NUM];   //starting from line 3 up to 6. then 8 devs for term_receive and 8 more for term_transmit (line 7). Last device is interval timer
+int deviceSemaphores[DEVICE_NUM];   //starting from line 3 up to 6. then 8 devs for term_receive and 8 more for term_transmit (line 7). Last device is interval time
 
 static inline void initDevSemaphores();
 static passupvector_t *initPassupVector();
