@@ -78,19 +78,20 @@ void create_Process() {
 
     if(tmp == NULL) {
         currentProcess->p_s.reg_v0 = -1;                        /* non possiamo creare il processo, ritorniamo -1 */                                            //TODO check if return value il correct
+    }else{ 
+
+      copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    /* we copy the process into tmp and assign it the support structure if present*/
+      support_t *supportData = (support_t*)currentProcess -> p_s.reg_a2;
+      if(supportData != NULL && supportData != 0) {
+          tmp -> p_supportStruct = supportData;
+      }
+
+      processCount++;
+      insertProcQ(&readyQueue, tmp);
+      insertChild(currentProcess, tmp);
+
+      currentProcess->p_s.reg_v0 = 0;
     }
-
-    copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    /* we copy the process into tmp and assign it the support structure if present*/
-    support_t *supportData = (support_t*)currentProcess -> p_s.reg_a2;
-    if(supportData != NULL && supportData != 0) {
-        tmp -> p_supportStruct = supportData;
-    }
-
-    processCount++;
-    insertProcQ(&readyQueue, tmp);
-    insertChild(currentProcess, tmp);
-
-    currentProcess->p_s.reg_v0 = 0;                                //Since process is "ready", we can return 0 (ok)
     contextSwitch(currentProcess);
 }
 
@@ -99,6 +100,7 @@ void terminate_Process(pcb_t *current) {
     while(!emptyChild(current)){
         terminate_Process(removeChild(current));
     }
+    processCount--;
     outChild(current);
     scheduler();
 }

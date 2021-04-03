@@ -91,7 +91,7 @@ void handleIntervalTimerInterrupt() {
     pcb_t *tmp = removeBlocked(&clockSemaphore);
     while(tmp != NULL){
         insertProcQ(&readyQueue, tmp);
-        softBlockedCount++;
+        softBlockedCount--;
         tmp = removeBlocked(&clockSemaphore);
     }
     clockSemaphore = 0;
