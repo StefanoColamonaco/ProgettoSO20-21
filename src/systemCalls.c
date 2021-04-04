@@ -108,12 +108,12 @@ void terminate_Process(pcb_t *current) {
 /*operazione con cui si richiede la risorsa relativa ad un semaforo*/
 void passeren() {
   mutex = (int*)(currentProcess -> p_s.reg_a1);
-  *mutex = *mutex - 1;
-  if(*mutex < 0){
+  if(*mutex <= 0){
     blockCurrentProcessAt(mutex);        
     scheduler();
   } 
   else {  
+    (*mutex) = (*mutex)-1;
     contextSwitch(currentProcess);
   }
 }
@@ -121,12 +121,16 @@ void passeren() {
 /*operazione con cui si rilascia la risorsa relativa ad un semaforo*/
 void verhogen() {
   mutex = (int*)(currentProcess -> p_s.reg_a1);
-  if(headBlocked(mutex) == NULL) {
-      *mutex = *mutex + 1;
-  } else {
-    pcb_t *tmp = removeBlocked(mutex);
-    insertProcQ(&readyQueue, tmp);
-  }
+  //if((*mutex)+1 > 0){
+    if(headBlocked(mutex) == NULL) {
+        (*mutex) = (*mutex)+1;
+    }else{
+    pcb_t *tmp = removeBlocked(mutex); ///se rimane la lista vuota allora incremento
+    if(tmp != NULL){
+      insertProcQ(&readyQueue, tmp);
+    }
+    }
+  //}  
   contextSwitch(currentProcess);
 }
 
