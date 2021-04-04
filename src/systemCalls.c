@@ -97,6 +97,10 @@ void create_Process() {
 
 /*termina il processo invocante e tutta la sua progenie*/
 void terminate_Process(pcb_t *current) {
+    if(current->p_semAdd != NULL) {
+      *(current -> p_semAdd) = *(current -> p_semAdd) + 1;  
+      outBlocked(current);
+    }
     while(!emptyChild(current)){
         terminate_Process(removeChild(current));
     }
