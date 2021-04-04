@@ -26,14 +26,14 @@ void handleExceptions() {
         case EXC_MOD:
         case EXC_TLBL:
         case EXC_TLBS:
-            //handleTLBEvents
+            TLBExceptionHandler();
             break;
 
         case EXC_ADEL:
         case EXC_ADES:
         case EXC_IBE:
         case EXC_DBE:
-            passupOrDie(excCode);
+            passupOrDie(GENERALEXCEPT);
             break;
 
         case EXC_SYS:
@@ -44,7 +44,7 @@ void handleExceptions() {
         case EXC_RI:
         case EXC_CPU:
         case EXC_OV:
-            passupOrDie(excCode);
+            passupOrDie(GENERALEXCEPT);
             break;
 
     }
@@ -61,7 +61,7 @@ system call fosse sollevata e diamo il controllo al BIOS exceptions handler
 (anche in questo caso terminiamo il processo e passiamo il controllo allo scheduler)
 */
 void passupOrDie(int exceptionType){
-  if(currentProcess -> p_supportStruct != NULL){                                  
+  if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                                  
     copyStateInfo((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
     LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_stackPtr,
           currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_status,
@@ -74,9 +74,9 @@ void passupOrDie(int exceptionType){
 }
 
 //placeholder to replace in future implementations
-/* void uTLB_RefillHandler() {
+ /*void uTLB_RefillHandler() {
     setENTRYHI(0x80000000);
     setENTRYLO(0x00000000);
     TLBWR();
     LDST ((STATE_PTR) 0x0FFFF000);
-} */
+}*/
