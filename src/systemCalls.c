@@ -31,6 +31,7 @@ void handleSystemcalls(){
 
     case TERMPROCESS: {
       terminate_Process(currentProcess);
+      scheduler();
       break;                                
     }
 
@@ -106,7 +107,7 @@ void terminate_Process(pcb_t *current) {
     }
     processCount--;
     outChild(current);
-    scheduler();
+    freePcb(current);
 }
 
 /*operazione con cui si richiede la risorsa relativa ad un semaforo*/
