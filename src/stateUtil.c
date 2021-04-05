@@ -2,7 +2,7 @@
 #include "pandos_const.h"
 #include "stateUtil.h"
 
-
+//consideriamo di toglierla
 void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigned int value) {
     if (value)
         *status |= 1U << bitPosition;
@@ -10,6 +10,7 @@ void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigne
         *status &= ~(1U << bitPosition);
 }
 
+/*Copy state from a source process to a target process*/
 void copyStateInfo(state_t *src, state_t *dest){
     for (int i = 0; i < STATE_GPR_LEN; i++) {
         dest -> gpr[i] = src -> gpr[i];

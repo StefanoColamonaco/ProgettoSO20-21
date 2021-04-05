@@ -14,7 +14,8 @@
 #include <umps3/umps/cp0.h>
 #include <umps3/umps/libumps.h>
 
-
+/*Handler for exceptions*/
+/*Linked through the passupvector*/
 void handleExceptions() {
     unsigned int cause = getCAUSE();
     unsigned int excCode = CAUSE_GET_EXCCODE(cause);
@@ -55,10 +56,10 @@ void TLBExceptionHandler() {
 }
 
 /*
-se il processo corrente non ha una struttura di supporto questo viene terminato e il controllo torna allo scheduler, 
-altrimenti accediamo all'area di memoria (BIOSDATAPAGE) in cui il BIOS ha salvato lo stato del processo prima che la 
-system call fosse sollevata e diamo il controllo al BIOS exceptions handler
-(anche in questo caso terminiamo il processo e passiamo il controllo allo scheduler)
+if the current process has no support structure this is terminated and control returns to the scheduler,
+otherwise we access the memory area (BIOSDATAPAGE) in which the BIOS has saved the state of the process before the
+system call was raised and we give control to the BIOS exceptions handler
+(also in this case we terminate the process and pass control to the scheduler)
 */
 void passupOrDie(int exceptionType){
   if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                                  
