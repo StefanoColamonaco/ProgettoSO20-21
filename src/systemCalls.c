@@ -88,7 +88,6 @@ void create_Process() {
           tmp -> p_supportStruct = supportData;
       }
 
-      processCount++;
       insertProcQ(&readyQueue, tmp);
       insertChild(currentProcess, tmp);
 
@@ -97,18 +96,25 @@ void create_Process() {
     contextSwitch(currentProcess);
 }
 
+static void terminate_Process_rec(pcb_t *current);
+
 /*ends the invoking process and all its progeny*/
 void terminate_Process(pcb_t *current) {
     if(current->p_semAdd != NULL) {
       *(current -> p_semAdd) = *(current -> p_semAdd) + 1;  
       outBlocked(current);
+    } else {
+      outProcQ(&readyQueue, current);
     }
     while(!emptyChild(current)){
         terminate_Process(removeChild(current));
     }
-    processCount--;
     outChild(current);
     freePcb(current);
+}
+
+static void terminate_Process_rec(pcb_t *current) {
+  
 }
 
 /* operation with which the resource relating to a semaphore is requested */

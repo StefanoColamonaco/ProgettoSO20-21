@@ -1,5 +1,8 @@
 #include "pcb.h"
 
+extern int processCount;
+
+
 /* Pointer to list of free pcbs*/
 static pcb_PTR pcbFree_h;
 
@@ -21,7 +24,9 @@ void initPcbs() {
 /* Insert a PCB into pcbFree_h list */
 
 void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbFree_h->p_prev)
-    if (pcbFree_h == NULL) {
+    if (p == NULL) {
+        return;
+    } else if (pcbFree_h == NULL) {
         pcbFree_h = p;
         p->p_next = p->p_prev = p;
     } else {
@@ -30,6 +35,7 @@ void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbF
         pcbFree_h->p_prev = p;
         p->p_prev->p_next = p;
     }
+    processCount--;
 }
 
 
@@ -56,8 +62,8 @@ pcb_t *allocPcb() {
         toReturn->p_next_sib = NULL;
         toReturn->p_prev_sib = NULL;
         toReturn->p_time = 0;
-        //toReturn->p_s = NULL; //todo figure out what to do with this member
-
+        //toReturn->p_s = NULL; 
+        processCount++;
         return toReturn;
     }
 }

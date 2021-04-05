@@ -55,8 +55,7 @@ int main() {
         firstProcess->p_supportStruct = NULL;
 
         insertProcQ(&readyQueue, firstProcess);
-        processCount++;
-
+        
         scheduler();
     }else{
         PANIC();
