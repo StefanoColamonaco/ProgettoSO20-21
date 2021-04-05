@@ -200,7 +200,8 @@ pcb_t *outChild(pcb_t *p) {
         return NULL;
 
     if (p->p_prnt->p_child == p) {  //if p is first child, update parent's child pointer
-        p->p_prnt->p_child = p->p_next_sib;
+        //p->p_prnt->p_child = p->p_next_sib;
+        p->p_prnt->p_child = p->p_prev_sib;
     }
 
     unlinkChild(p);
