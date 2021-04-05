@@ -32,7 +32,6 @@ void handleSystemcalls(){
 
     case TERMPROCESS: {
       terminate_Process(currentProcess);
-      scheduler();
       break;                                
     }
 
@@ -52,8 +51,8 @@ void handleSystemcalls(){
     }
 
     case GETTIME: {
-        get_Cpu_Time();
-        break;
+      get_Cpu_Time();
+      break;
     }
 
     case CLOCKWAIT: {
@@ -74,18 +73,17 @@ void handleSystemcalls(){
 
 }
 
-/* is used to create a process as a child of the process calling this sys call */
+/* creates process as a child of the calling pcb  */
 void create_Process() {
     pcb_t *tmp = allocPcb();
 
-    if(tmp == NULL) {
+    if (tmp == NULL) {
         currentProcess->p_s.reg_v0 = -1;                        /* we can't create a new process */
-    }else{ 
-
+    } else { 
       copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    
-      support_t *supportData = (support_t*)currentProcess -> p_s.reg_a2;    /* we assign to tmp the support structure if present*/
+      support_t *supportData = (support_t*)currentProcess->p_s.reg_a2;    /* we assign to tmp the support structure if present*/
       if(supportData != NULL && supportData != 0) {
-          tmp -> p_supportStruct = supportData;
+          tmp->p_supportStruct = supportData;
       }
 
       insertProcQ(&readyQueue, tmp);
@@ -100,32 +98,33 @@ static void terminate_Process_rec(pcb_t *current);
 
 /*ends the invoking process and all its progeny*/
 void terminate_Process(pcb_t *current) {
-    if(current->p_semAdd != NULL) {
-      *(current -> p_semAdd) = *(current -> p_semAdd) + 1;  
-      outBlocked(current);
-    } else {
-      outProcQ(&readyQueue, current);
-    }
-    while(!emptyChild(current)){
-        terminate_Process(removeChild(current));
-    }
-    outChild(current);
-    freePcb(current);
+  terminate_Process_rec(current);
+  scheduler();
 }
 
 static void terminate_Process_rec(pcb_t *current) {
-  
+  if (current == NULL) return;
+  outChild(current);
+  while(!emptyChild(current)){
+    terminate_Process_rec(removeChild(current));
+  }
+  if(current->p_semAdd != NULL) {
+    *(current -> p_semAdd) = *(current -> p_semAdd) + 1;  
+    outBlocked(current);
+  } else {
+    outProcQ(&readyQueue, current);
+  }
+    freePcb(current);
 }
 
 /* operation with which the resource relating to a semaphore is requested */
 void passeren() {
-  mutex = (int*)(currentProcess -> p_s.reg_a1);
-  *mutex = *mutex-1;
-  if(*mutex < 0){
+  mutex = (int*)(currentProcess->p_s.reg_a1);
+  *mutex = *mutex - 1;
+  if (*mutex < 0) {
     blockCurrentProcessAt(mutex);        
     scheduler();
-  } 
-  else {  
+  } else {  
     contextSwitch(currentProcess);
   }
 }
@@ -135,8 +134,9 @@ void verhogen() {
   mutex = (int*)(currentProcess -> p_s.reg_a1);
   *mutex = *mutex + 1;
   pcb_t *tmp = removeBlocked(mutex); ///se rimane la lista vuota allora incremento
-  if (tmp != NULL)
+  if (tmp != NULL){
     insertProcQ(&readyQueue, tmp);
+  }
   contextSwitch(currentProcess);
 }
 
