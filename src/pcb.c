@@ -11,7 +11,6 @@ static pcb_t pcbFree_table[MAXPROC];
 
 
 /* Fills pcbFree_h list */
-
 void initPcbs() {
     pcbFree_h = &pcbFree_table[0];
     for (int i = 0; i < MAXPROC; i++) {
@@ -22,7 +21,6 @@ void initPcbs() {
 
 
 /* Insert a PCB into pcbFree_h list */
-
 void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbFree_h->p_prev)
     if (p == NULL) {
         return;
@@ -39,20 +37,17 @@ void freePcb(pcb_t *p) {    //list is circular. pcb is inserted at the end (pcbF
 }
 
 
-/* PCB allocation and initialization*/
-
+/*PCB allocation and initialization*/
 pcb_t *allocPcb() {
     if (pcbFree_h == NULL) {
         return NULL;
     } else {
         pcb_PTR toReturn = pcbFree_h;
-
         if (pcbFree_h != pcbFree_h->p_next) {  //update head
             pcbFree_h = pcbFree_h->p_next;
         } else {
             pcbFree_h = NULL;
         }
-
         unlinkPCB(toReturn);
 
         toReturn->p_prev = NULL;
@@ -61,22 +56,20 @@ pcb_t *allocPcb() {
         toReturn->p_prnt = NULL;
         toReturn->p_next_sib = NULL;
         toReturn->p_prev_sib = NULL;
+        toReturn->p_supportStruct = NULL;
         toReturn->p_time = 0;
-        //toReturn->p_s = NULL; 
         processCount++;
         return toReturn;
     }
 }
 
 /* Make an empty PCB list */
-
 pcb_t *mkEmptyProcQ() {
     return NULL;
 }
 
 
 /* Returns TRUE if the list is empty, FALSE otherwise */
-
 int emptyProcQ(pcb_t *tp) {
     if (tp == NULL)
         return TRUE;
@@ -86,7 +79,6 @@ int emptyProcQ(pcb_t *tp) {
 
 
 /* Insert PCB p at the end of tp list */
-
 void insertProcQ(pcb_t **tp, pcb_t *p) {
     if (emptyProcQ(*tp)) {
         p->p_prev = p->p_next = p;
@@ -101,7 +93,6 @@ void insertProcQ(pcb_t **tp, pcb_t *p) {
 
 
 /* Return the element at the end of tp ( NULL otherwise ) */
-
 pcb_t *headProcQ(pcb_t *tp) {
     if (emptyProcQ(tp))
         return NULL;
@@ -111,7 +102,6 @@ pcb_t *headProcQ(pcb_t *tp) {
 
 
 /* Removes oldest element from tp and return a pointer */
-
 pcb_t *removeProcQ(pcb_t **tp) {
     if (emptyProcQ(*tp))
         return NULL;
@@ -127,7 +117,6 @@ pcb_t *removeProcQ(pcb_t **tp) {
 
 
 /* Removes PCB p from tp list ( return NULL otherwise ) */
-
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {
     if (emptyProcQ((*tp)))
         return NULL;
@@ -155,13 +144,11 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p) {
 
 
 /* Returns TRUE if p has no childrens, FALSE otherwise */
-
 int emptyChild(pcb_t *p) {
     return p->p_child == NULL;
 }
 
 /* Insert p as child of prnt  */
-
 void insertChild(pcb_t *prnt, pcb_t *p) {
     p->p_prnt = prnt;
     p->p_next_sib = NULL;
@@ -180,7 +167,6 @@ void insertChild(pcb_t *prnt, pcb_t *p) {
 
 
 /* Removes first child of p and returns it ( return NULL otherwise ) */
-
 pcb_t *removeChild(pcb_t *p) {
     if (emptyChild(p))
         return NULL;
@@ -194,7 +180,7 @@ pcb_t *removeChild(pcb_t *p) {
 }
 
 
-
+/*removes pcb from parent's child hierarchy*/
 pcb_t *outChild(pcb_t *p) {
     if (p->p_prnt == NULL)
         return NULL;

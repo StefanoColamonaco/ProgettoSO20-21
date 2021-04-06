@@ -22,13 +22,12 @@ int deviceSemaphores[DEVICE_NUM];   //starting from line 3 up to 6. then 8 devs 
 
 static inline void initDevSemaphores();
 static passupvector_t *initPassupVector();
+static pcb_t *initFirstProcess();
 static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
 extern void uTLB_RefillHandler();
 
 int main() {
-
     initPassupVector();  
-    
     initPcbs();
     initASL();
 
@@ -38,16 +37,20 @@ int main() {
 
     initDevSemaphores();
     loadIntervalTimer(100000);
+    initFirstProcess();
+    scheduler();
+    return 0;
+}
 
-    /*first process initialization*/
-    memaddr ramTop;
-    RAMTOP(ramTop);
+pcb_t *initFirstProcess() {
     pcb_t *firstProcess = allocPcb();
     if(firstProcess != NULL) {
         state_t *state = &(firstProcess->p_s);
         state->reg_t9 = (memaddr)test;
         state->pc_epc = state->reg_t9;                                 //set PC to test function
         firstProcess->p_s.status = ALLOFF | IECON | IMON | TEBITON;    //set status
+        memaddr ramTop;
+        RAMTOP(ramTop);
         state->reg_sp = ramTop;                                        //RAMTOP's side effect sets the stackpointer
 
         firstProcess->p_time = 0;
@@ -56,11 +59,10 @@ int main() {
 
         insertProcQ(&readyQueue, firstProcess);
         
-        scheduler();
-    }else{
+        return firstProcess;
+    } else {
         PANIC();
     }    
-    return 0;
 }
 
 passupvector_t *initPassupVector() {

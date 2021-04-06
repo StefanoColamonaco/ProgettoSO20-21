@@ -128,7 +128,7 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     }
 }
 
-/* is a V operation on the semaphore associated to the device number */
+/*V operation on the semaphore associated to the device number */
 void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     softBlockedCount--;
     if(deviceSemaphores[deviceNo] <= 0){
@@ -153,6 +153,7 @@ static void acknowledgeTermInterrupt(termreg_t *dev) {
     }
 }
 
+/*check if terminal is RECV or TRANSM and returns the status accordingly*/
 static inline unsigned int getTermStatus(termreg_t dev) {
     if (terminalIsRECV(dev)) {
         return dev.recv_status;
@@ -161,6 +162,7 @@ static inline unsigned int getTermStatus(termreg_t dev) {
     }
 }
 
+/*returns semaphore index associated to the device*/
 unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV) {
     switch (interruptLine) {
     case INTERTIMEINT:

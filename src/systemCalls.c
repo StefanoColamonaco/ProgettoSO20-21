@@ -13,7 +13,7 @@
 
 int *mutex = 0;
 
-/*Handler for exception labeled as system calls*/
+/*Handler for exceptions labeled as system calls*/
 void handleSystemcalls(){
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    
@@ -85,10 +85,8 @@ void create_Process() {
       if(supportData != NULL && supportData != 0) {
           tmp->p_supportStruct = supportData;
       }
-
       insertProcQ(&readyQueue, tmp);
       insertChild(currentProcess, tmp);
-
       currentProcess->p_s.reg_v0 = 0;    //OK, process created correctly
     }
     contextSwitch(currentProcess);
@@ -103,7 +101,9 @@ void terminate_Process(pcb_t *current) {
 }
 
 static void terminate_Process_rec(pcb_t *current) {
-  if (current == NULL) return;
+  if (current == NULL) {
+    return;
+  }
   outChild(current);
   while(!emptyChild(current)){
     terminate_Process_rec(removeChild(current));
@@ -142,9 +142,8 @@ void verhogen() {
 
 /*
 blocks a process until an I / O operation is completed
-I / O operations take an arbitrary time, so the process is put "on pause"
+I / O operations take arbitrary time, so the process is put "on hold"
 */
-
 void  wait_For_IO() {
   int lineNumber = currentProcess -> p_s.reg_a1;   
   int deviceNumber = currentProcess -> p_s.reg_a2;

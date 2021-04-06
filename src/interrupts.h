@@ -6,7 +6,9 @@
 
 void handleInterrupts();
 
+
 /*UTILS*/
+
 void releaseSemAssociatedToDevice(int deviceNo, unsigned int status);
 
 unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM);

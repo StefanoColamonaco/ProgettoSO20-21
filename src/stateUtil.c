@@ -2,13 +2,6 @@
 #include "pandos_const.h"
 #include "stateUtil.h"
 
-//consideriamo di toglierla
-void setStatusBitToValue(unsigned int *status, unsigned int bitPosition, unsigned int value) {
-    if (value)
-        *status |= 1U << bitPosition;
-    else
-        *status &= ~(1U << bitPosition);
-}
 
 /*Copy state from a source process to a target process*/
 void copyStateInfo(state_t *src, state_t *dest){
