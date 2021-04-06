@@ -27,8 +27,6 @@ static inline void acknowledgeTermInterrupt(termreg_t *dev);
 
 static inline int terminalIsRECV(termreg_t dev);
 
-static inline int terminalIsTRANSM(unsigned int *devBase);
-
 static inline unsigned int getTermStatus(termreg_t dev);
 
 
@@ -123,9 +121,9 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
 }
 
 unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
-    unsigned int *bitmap = (memaddr)CDEV_BITMAP_ADDR(interruptLine);
+    unsigned int *bitmap = (unsigned int*)CDEV_BITMAP_ADDR(interruptLine);
     for (int i = 0; i < DEVPERINT; i++) {
-        if ((*bitmap >> i) & 1U == ON)
+        if ( ((*bitmap >> i) & 1U) == ON )
             return i;
     }
 }
@@ -183,7 +181,8 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
         else 
             return (interruptLine - DISKINT + 1)*8 + deviceNo;
             
-        //TODO handle default case
+    default:
+        PANIC();
     }
 }
 
