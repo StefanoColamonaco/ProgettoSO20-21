@@ -100,7 +100,7 @@ void handleIntervalTimerInterrupt() {
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
-    devreg_t *dev = DEV_REG_ADDR(interruptLine, deviceNo);
+    devreg_t *dev = (devreg_t*)DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = 0;
 
     if (interruptLine == TERMINT) {
