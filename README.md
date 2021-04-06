@@ -17,13 +17,13 @@ Four new main modules are added.
 ### Execptions
 Entry point for exception handling. Here we decode the exception code and dispatch to the appropriate handler.
 
-## Interrupts
+### Interrupts
 The device generating the interrupt is identified and the interrupt is resolved. 
 
-## Scheduler
+### Scheduler
 Simple preemptive and round-robin algorithm with basic deadlock detection.
 
-## System Calls
+### System Calls
 System calls are handled here. duh
 Any call not numbered 0-8 (inclusive) is passed up.
 
