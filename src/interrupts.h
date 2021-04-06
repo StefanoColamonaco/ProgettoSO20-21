@@ -4,13 +4,14 @@
 #include "init.h"
 #include "scheduler.h"
 
+/*interrupt handling entry point*/
 void handleInterrupts();
 
 
 /*UTILS*/
 
-void releaseSemAssociatedToDevice(int deviceNo, unsigned int status);
+void releaseSemAndUpdateStatus(int deviceNo, unsigned int status);
 
-unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM);
+unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM);
 
 #endif

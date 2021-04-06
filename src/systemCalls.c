@@ -147,7 +147,7 @@ I / O operations take arbitrary time, so the process is put "on hold"
 void  wait_For_IO() {
   int lineNumber = currentProcess -> p_s.reg_a1;   
   int deviceNumber = currentProcess -> p_s.reg_a2;
-  unsigned int deviceIndex = getSemNumber(lineNumber, deviceNumber, currentProcess->p_s.reg_a3);
+  unsigned int deviceIndex = getSemIndex(lineNumber, deviceNumber, currentProcess->p_s.reg_a3);
   deviceSemaphores[deviceIndex]--;
   softBlockedCount++;
   blockCurrentProcessAt(&(deviceSemaphores[deviceIndex]));

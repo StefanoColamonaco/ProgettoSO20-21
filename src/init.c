@@ -1,5 +1,6 @@
 #include <umps3/umps/cp0.h>
 #include <umps3/umps/types.h>
+#include <umps3/umps/libumps.h>
 
 #include "init.h"
 #include "exceptions.h"
@@ -7,8 +8,6 @@
 #include "stateUtil.h"
 #include "pcb.h"
 #include "asl.h"
-
-#include <umps3/umps/libumps.h>
 
 #define NUCLEUS_STACKPAGE_TOP 0x20001000
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1] //only for convenience
@@ -18,12 +17,17 @@ int softBlockedCount = 0;       //number of processes blocked due to I/O
 pcb_t *readyQueue = NULL;       //tail pointer to queue of ready processes
 pcb_t *currentProcess;          //pointer to pcb that is in running state
 cpu_t startT;
-int deviceSemaphores[DEVICE_NUM];   //starting from line 3 up to 6. then 8 devs for term_receive and 8 more for term_transmit (line 7). Last device is interval time
+int deviceSemaphores[DEVICE_NUM];   //last device is interval time
+
 
 static inline void initDevSemaphores();
+
 static passupvector_t *initPassupVector();
+
 static pcb_t *initFirstProcess();
+
 static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
+
 extern void uTLB_RefillHandler();
 
 int main() {
@@ -51,7 +55,7 @@ pcb_t *initFirstProcess() {
         firstProcess->p_s.status = ALLOFF | IECON | IMON | TEBITON;    //set status
         memaddr ramTop;
         RAMTOP(ramTop);
-        state->reg_sp = ramTop;                                        //RAMTOP's side effect sets the stackpointer
+        state->reg_sp = ramTop;                                        
 
         firstProcess->p_time = 0;
         firstProcess->p_semAdd = NULL;

@@ -104,6 +104,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     devreg_t *dev = DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = 0;
+
     if (interruptLine == TERMINT) {
         savedStatus = getTermStatus(dev->term);
         acknowledgeTermInterrupt(&dev->term);
@@ -111,7 +112,8 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
         savedStatus = dev->dtp.status;
         acknowledgeDTPInterrupt(&dev->dtp);
     }
-    releaseSemAssociatedToDevice(getSemNumber(interruptLine, deviceNo, terminalIsRECV(dev->term)), savedStatus);
+
+    releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, terminalIsRECV(dev->term)), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
@@ -141,6 +143,7 @@ void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
     }
 }
 
+
 static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
     dev->command = ACK;
 }
@@ -163,7 +166,7 @@ static inline unsigned int getTermStatus(termreg_t dev) {
 }
 
 /*returns semaphore index associated to the device*/
-unsigned int getSemNumber(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV) {
+unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV) {
     switch (interruptLine) {
     case INTERTIMEINT:
         return DEVICE_NUM-1;    //TODO REPLACE WITH MACRO

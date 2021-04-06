@@ -45,7 +45,6 @@ void initASL(){
 }
 
 /* Utility function to find semd_t value associated to the element before semAdd */
-
 semd_t *findSemInActiveList(int *semAdd){
   semd_t *tmp = semd_h;
   
@@ -55,7 +54,6 @@ semd_t *findSemInActiveList(int *semAdd){
 }
 
 /* Take a semaphore from semFree list, initializes it and returns it */
-
 semd_t* newSemd() {
     if( semdFree_h == NULL ) {
         return NULL;
@@ -70,7 +68,6 @@ semd_t* newSemd() {
 }
 
 /* Returns an element to the free list */
-
 void freeSemd(semd_t *semd){
     semd_t *tmp = semdFree_h;
     if(semdFree_h == NULL){
@@ -86,7 +83,6 @@ void freeSemd(semd_t *semd){
     Insert p into the queue of blocked processes associated to semAdd
     Return TRUE if semdFree_h is empty, FALSE otherwise
 */
-
 int insertBlocked(int *semAdd, pcb_t *p){
     semd_t *tmp = findSemInActiveList(semAdd);
 
@@ -111,7 +107,6 @@ int insertBlocked(int *semAdd, pcb_t *p){
 }
 
 /* Returns the first PCB from the queue of blocked processes */
-
 pcb_t *removeBlocked(int *semAdd){
     semd_t *tmp = findSemInActiveList(semAdd);
     if(tmp -> s_next -> s_semAdd == semAdd){
@@ -130,7 +125,6 @@ pcb_t *removeBlocked(int *semAdd){
 }
 
 /* Remove p from the queue where it is blocked ( returns NULL otherwise ) */
-
 pcb_t *outBlocked(pcb_t *p){
     semd_t *tmp = findSemInActiveList(p -> p_semAdd);
     pcb_t *releasedPcb = outProcQ(&tmp -> s_next -> s_procQ, p);
@@ -151,7 +145,6 @@ pcb_t *outBlocked(pcb_t *p){
 }
 
 /* Returns the PCB at the head of semAdd's queue */
-
 pcb_t *headBlocked(int *semAdd){
     semd_t *tmp = findSemInActiveList(semAdd);
 
