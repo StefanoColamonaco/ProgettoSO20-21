@@ -63,7 +63,7 @@ system call was raised and we give control to the BIOS exceptions handler
 */
 void passupOrDie(int exceptionType){
   if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                                  
-    copyStateInfo((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
+    copyState((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
     LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_stackPtr,
           currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_status,
           currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].c_pc);

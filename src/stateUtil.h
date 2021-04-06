@@ -4,7 +4,8 @@
 
 #include <umps3/umps/types.h>
 
-void copyStateInfo(state_t *src, state_t *dest);      /* change a state from a source to a destination state* */
+/*Copy state from a source process to a target process*/
+void copyState(state_t *src, state_t *dest);      
 
 
 #endif //PROGETTOSO20_21_STATEUTIL_H

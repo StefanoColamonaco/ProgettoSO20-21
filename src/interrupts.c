@@ -70,7 +70,7 @@ void handleInterrupts() {
     }
     if(currentProcess != NULL){
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
-        copyStateInfo((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
+        copyState((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
         prepareSwitch(currentProcess, timeLeft);
     }
 }
@@ -78,7 +78,7 @@ void handleInterrupts() {
 void handlePLTInterrupt(int stopT) {
     if(currentProcess != NULL){
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
-        copyStateInfo(((state_t*)BIOSDATAPAGE), &(currentProcess -> p_s));
+        copyState(((state_t*)BIOSDATAPAGE), &(currentProcess -> p_s));
         insertProcQ(&readyQueue, currentProcess);
         scheduler();
     } else {

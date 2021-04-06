@@ -21,7 +21,7 @@ void handleSystemcalls(){
     passupOrDie(GENERALEXCEPT);    
   }
 
-  copyStateInfo(systemState, &(currentProcess -> p_s));
+  copyState(systemState, &(currentProcess -> p_s));
   currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;     //(+4 bytes)
 
   switch(currentSyscall){
@@ -80,7 +80,7 @@ void create_Process() {
     if (tmp == NULL) {
         currentProcess->p_s.reg_v0 = -1;                        /* we can't create a new process */
     } else { 
-      copyStateInfo((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    
+      copyState((state_t*)currentProcess->p_s.reg_a1, &tmp->p_s);    
       support_t *supportData = (support_t*)currentProcess->p_s.reg_a2;    /* we assign to tmp the support structure if present*/
       if(supportData != NULL && supportData != 0) {
           tmp->p_supportStruct = supportData;
@@ -94,7 +94,7 @@ void create_Process() {
 
 static void terminate_Process_rec(pcb_t *current);
 
-/*ends the invoking process and all its progeny*/
+/*terminates the invoking process and all its progeny*/
 void terminate_Process(pcb_t *current) {
   terminate_Process_rec(current);
   scheduler();

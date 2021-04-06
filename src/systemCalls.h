@@ -9,9 +9,12 @@
 extern int *mutex;      
 
 /* System calls handler */
+
 void handleSystemcalls();
 
+
 /* System calls 1-8 */
+
 void  create_Process();
 
 void terminate_Process();
@@ -28,6 +31,7 @@ void wait_For_Clock();
 
 
 /*helper functions*/
+
 void get_support_data();
 
 void blockCurrentProcessAt(int *sem);
