@@ -131,7 +131,7 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
 }
 
 /*V operation on the semaphore associated to the device number */
-void releaseSemAssociatedToDevice(int deviceNo, unsigned int status) {
+void releaseSemAndUpdateStatus(int deviceNo, unsigned int status) {
     softBlockedCount--;
     if(deviceSemaphores[deviceNo] <= 0){
         pcb_t *tmp = removeBlocked(&deviceSemaphores[deviceNo]);
