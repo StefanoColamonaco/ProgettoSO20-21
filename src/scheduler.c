@@ -11,7 +11,7 @@
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/cp0.h>
 
-/*A simple preentive and round robin scheduler algorithm with time-slice of 5ms*/
+/*A simple preemptive and round robin scheduler algorithm with time-slice of 5ms*/
 void scheduler() {
   pcb_t *p = removeProcQ(&readyQueue);
   if(p != NULL){

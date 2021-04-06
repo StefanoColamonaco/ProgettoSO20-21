@@ -12,7 +12,7 @@ compile_flags = -std=c11 -Wall -O0
 CFLAGS = $(umps_flags) $(compile_flags) $(include_dirs)
 
 LD = mipsel-linux-gnu-ld
-LDFLAGS = -G 0 -nostdlib -T$(shell find /usr/ -name umpscore.ldscript 2> /dev/null | head -n 1)
+LDFLAGS = -G 0 -nostdlib -T$(shell find /usr/ -name umpscore.ldscript 2> /dev/null)
 .SUFFIXES:
 .SUFFIXES: .h .c .o .S .umps
 

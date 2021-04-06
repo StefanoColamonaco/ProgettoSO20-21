@@ -5,7 +5,7 @@
 
 void scheduler();
 
-void contextSwitch(pcb_t *current);       /* function that implement context switching when necessary */
+void contextSwitch(pcb_t *current);     
 
 void setStatusForWaiting();
 
