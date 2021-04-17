@@ -14,17 +14,28 @@ typedef signed int   cpu_t;
 typedef unsigned int memaddr;
 
 
+/* Types added by Mikeyg */
+
+typedef struct pteEntry_t {
+    unsigned int pte_entryHI;
+    unsigned int pte_entryLO;
+} pteEntry_t;
+
+
 typedef struct context_t {
-    unsigned int c_stackPtr;
-    unsigned int c_status;
-    unsigned int c_pc;
+    unsigned int stackPtr;
+    unsigned int status;
+    unsigned int pc;
 } context_t;
 
+
 typedef struct support_t {
-    int       sup_asid;             /* process ID					*/
-    state_t   sup_exceptState[2];   /* old state exceptions			*/
-    context_t sup_exceptContext[2]; /* new contexts for passing up	*/
+    int        sup_asid;                        /* process ID					*/
+    state_t    sup_exceptState[2];              /* old state exceptions			*/
+    context_t  sup_exceptContext[2];            /* new contexts for passing up	*/
+    pteEntry_t sup_privatePgTbl[USERPGTBLSIZE]; /* user page table				*/
 } support_t;
+
 
 /* process table entry type */
 typedef struct pcb_t {
@@ -48,6 +59,14 @@ typedef struct pcb_t {
 
 } pcb_t, *pcb_PTR;
 
+
+/* Page swap pool information structure type */
+typedef struct swap_t {
+    int         sw_asid;   /* ASID number			*/
+    int         sw_pageNo; /* page's virt page no.	*/
+    pteEntry_t *sw_pte;    /* page's PTE entry.	*/
+} swap_t;
+
 /* semaphore type */
 typedef struct semd_t {
     struct semd_t *s_next;         /* ptr to next element on queue */
@@ -55,7 +74,5 @@ typedef struct semd_t {
     pcb_PTR s_procQ;                /* ptr to tail of the queue of procs. blocked on this sem. */
 
 } semd_t, *semd_PTR;
-
-
 
 #endif

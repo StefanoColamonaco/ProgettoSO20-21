@@ -153,9 +153,6 @@
 #define DEVICECNT  (DEVINTNUM * DEVPERINT)
 #define MAXSTRLENG 128
 
-#define DELAYASID    (UPROCMAX + 1)
-#define KUSEG3SECTNO 0
-
 #define VMDISK        0
 #define MAXPAGES      32
 #define USERPGTBLSIZE MAXPAGES
@@ -175,5 +172,6 @@
 #define UPROCMAX 8
 #define POOLSIZE (UPROCMAX * 2)
 /* End of Mikeyg constants */
+
 
 #endif
