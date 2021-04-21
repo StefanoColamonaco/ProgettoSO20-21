@@ -1,11 +1,20 @@
 #include <pandos_types.h>
-
 #include <asl.h>
 
 swap_t swapPool[POOLSIZE]; 
 semd_t *swapSem;
 
 unsigned int freeAsidBitmap = 0b11111111;   
+
+
+void initUprocPageTable(pcb_t *uproc);
+
+static int getVPNAddress(int index);
+
+static inline int getFreeAsid();
+
+static inline int getVPNAddress(int index);
+
 
 
 void initUprocPageTable(pcb_t *uproc) {
@@ -39,3 +48,4 @@ int getVPNAddress(int index) {
     }
     return 0x80000 + index;
 }
+
