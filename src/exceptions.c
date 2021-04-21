@@ -74,10 +74,23 @@ void passupOrDie(int exceptionType){
 
 }
 
-//placeholder to replace in future implementations
- /*void uTLB_RefillHandler() {
-    setENTRYHI(0x80000000);
-    setENTRYLO(0x00000000);
-    TLBWR();
-    LDST ((STATE_PTR) 0x0FFFF000);
-}*/
+static pteEntry_t *getPageToWrite();
+
+void uTLB_RefillHandler () {
+	pteEntry_t *pageToWrite = getPageToWrite(currentProcess->p_supportStruct->sup_privatePgTbl);
+	setENTRYHI(pageToWrite->pte_entryHI);
+	setENTRYLO(pageToWrite->pte_entryLO);
+	TLBWR();    //TODO replace with TLBWI() after a replacing algorithm is implemented	
+	contextSwitch(currentProcess);
+}
+
+pteEntry_t *getPageToWrite() {
+    unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
+    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
+    for (int i = 0; i < MAXPAGES; i++) {
+        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
+            return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+        }
+    }
+    SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
+}
