@@ -1,8 +1,13 @@
+#include <umps3/umps/libumps.h>
+#include <umps3/umps/const.h>
 #include <pandos_types.h>
+#include <pandos_const.h>
 #include <asl.h>
 
-swap_t swapPool[POOLSIZE]; 
-semd_t *swapSem;
+#include "init.h"
+
+swap_t swapTable[POOLSIZE];
+int swapSemaphore = 1;
 
 unsigned int freeAsidBitmap = 0b11111111;   
 
@@ -49,3 +54,22 @@ int getVPNAddress(int index) {
     return 0x80000 + index;
 }
 
+
+void initSwapTable() {
+    for (int i = 0; i < POOLSIZE; i++) {
+        swapTable->sw_asid = -1;
+    }
+}
+
+
+
+
+void handlePageFault() {
+    SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+    support_t *supp = currentProcess->p_s.reg_v0;
+    unsigned int cause = currentProcess->p_s.cause;
+    if (cause == TLB)
+
+
+
+}
