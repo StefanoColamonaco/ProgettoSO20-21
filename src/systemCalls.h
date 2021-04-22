@@ -29,6 +29,18 @@ void get_Cpu_Time();
 
 void wait_For_Clock();
 
+/* System caòòs for support evel */
+
+void terminate();
+
+void get_TOD();
+
+void write_To_Printer();
+
+void write_To_Terminal();
+
+void read_From_Terminal();
+
 
 /*helper functions*/
 

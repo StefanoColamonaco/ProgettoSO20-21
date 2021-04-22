@@ -16,6 +16,7 @@ int processCount = 0;           //number of started but not yet terminated proce
 int softBlockedCount = 0;       //number of processes blocked due to I/O
 pcb_t *readyQueue = NULL;       //tail pointer to queue of ready processes
 pcb_t *currentProcess;          //pointer to pcb that is in running state
+cpu_t globalStartT;
 cpu_t startT;
 int deviceSemaphores[DEVICE_NUM];   //last device is interval time
 
@@ -50,7 +51,7 @@ pcb_t *initFirstProcess() {
     pcb_t *firstProcess = allocPcb();
     if(firstProcess != NULL) {
         state_t *state = &(firstProcess->p_s);
-        state->reg_t9 = (memaddr)test;
+        state->reg_t9 = (memaddr)test_phase_3;
         state->pc_epc = state->reg_t9;                                 //set PC to test function
         firstProcess->p_s.status = ALLOFF | IECON | IMON | TEBITON;    //set status
         memaddr ramTop;

@@ -64,7 +64,32 @@ void handleSystemcalls(){
       get_support_data();
       break;
     }
-    // otherwise (sys call number > 8 or < 1)
+
+    /* Support level sys calls */
+
+    case TERMINATE: {
+      terminate();
+      break;
+    }
+    case GET_TOD: {
+      get_TOD();
+      break;
+    }
+    case WRITEPRINTER: {
+      write_To_Printer();
+      break;
+    }
+    case WRITETERMINAL: {
+      write_To_Terminal();
+      break;
+    }
+    case READTERMINAL: {
+      read_From_Terminal();
+      break;
+    }
+
+    /* otherwise (sys call number > 13 or < 1) */
+
     default: {
       passupOrDie(GENERALEXCEPT);
       break;
@@ -181,6 +206,58 @@ void get_support_data() {
     contextSwitch(currentProcess);
 }
 
+/* Wrapper for SYS2 at support level */
+void terminate() {
+  terminate_Process(currentProcess);
+}
+
+/* Returns the number of microseconds from system power on */
+void get_TOD() {
+  cpu_t stopT;
+  STCK(stopT);
+  currentProcess -> p_s.reg_v0 = globalStartT - stopT;  
+  contextSwitch(currentProcess);
+}
+
+/* system call that manages the printing of an entire string passed as argument*/
+void write_To_Printer() {
+  char *str = currentProcess -> p_s.reg_a1;
+  int strlen = currentProcess -> p_s.reg_a2;
+
+  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
+    terminate(currentProcess);
+  }
+  //note:
+  //dobbiamoavere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
+  //funzionamento analogo a print: caricamento di un carattere, attesa attraverso la sys5, lettura dello stato e carattere successivo
+  //se l'indirizzo della stringa da stampare è fuori dalla memoria virtuale del processo o la lunghezza della stringa è 0 terminiamo il processo
+  //output: numero dei caratteri stampati in caso di successo, oppure bisogna restituire lo stato di errore negato (con - davanti)
+}
+
+void write_To_Terminal() {
+  char *str = currentProcess -> p_s.reg_a1;
+  int strlen = currentProcess -> p_s.reg_a2;
+
+  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
+    terminate(currentProcess);
+  }
+  //note:
+  //come la sys 11 ma adattata alla scrittura su terminale
+}
+
+void read_From_Terminal() {
+  char *str = currentProcess -> p_s.reg_a1;
+  int strlen = currentProcess -> p_s.reg_a2;
+
+  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
+    terminate(currentProcess);
+  }
+  //note:
+  //come sys12 ma legge da terminale invece di scrivere
+  //mentre l'input viene letto il processo deve essere sospeso
+
+}
+
 /*function that add current process to the semaphore's associated list of blocked pcbs*/
 void blockCurrentProcessAt(int *sem) {
   cpu_t stopT;
@@ -189,3 +266,4 @@ void blockCurrentProcessAt(int *sem) {
   insertBlocked(sem, currentProcess);
   currentProcess = NULL;
 }
+

@@ -18,6 +18,8 @@ extern pcb_t *currentProcess;   //pointer to pcb that is in running state
 
 extern cpu_t startT;
 
+extern cpu_t globalStartT;
+
 extern int deviceSemaphores[];
 
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
@@ -29,7 +31,8 @@ extern int deviceSemaphores[];
 
 
 /*test function*/
-extern void test();
+extern void test();                          //for phase 2
+extern void test_phase_3();                  //for phase 3
 
 
 
