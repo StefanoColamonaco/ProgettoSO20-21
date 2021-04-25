@@ -25,11 +25,6 @@ extern int deviceSemaphores[];
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
 
 
-
-
-
-
-
 /*test function*/
 extern void test();                          //for phase 2
 extern void test_phase_3();                  //for phase 3
