@@ -1,9 +1,9 @@
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/const.h>
-#include <pandos_types.h>
-#include <pandos_const.h>
-#include <asl.h>
 
+#include "pandos_types.h"
+#include "pandos_const.h"
+#include "asl.h"
 #include "init.h"
 
 swap_t swapTable[POOLSIZE];
@@ -68,8 +68,29 @@ void handlePageFault() {
     SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     support_t *supp = currentProcess->p_s.reg_v0;
     unsigned int cause = currentProcess->p_s.cause;
-    if (cause == TLB)
+    if (cause == 0);
 
 
 
 }
+
+
+
+/*unit tests for this module. To move to another file*/
+
+void testGetFreeAsid() {
+    extern unsigned int freeAsidBitmap;
+
+    freeAsidBitmap = 2;
+    int asid = getFreeAsid();
+    if (asid != 1) {
+        print("asid is incorrect: not 1\n");
+    }
+
+    freeAsidBitmap = 0;
+    asid = getFreeAsid();
+    if (asid != -1) {
+        print ("no free asid but -1 not returned\n");
+    }
+}
+
