@@ -74,17 +74,17 @@ void passupOrDie(int exceptionType){
 
 }
 
-static pteEntry_t *getPageToWrite();
+static pteEntry_t *getMissingPage();
 
 void uTLB_RefillHandler () {
-	pteEntry_t *pageToWrite = getPageToWrite(currentProcess->p_supportStruct->sup_privatePgTbl);
+	pteEntry_t *pageToWrite = getMissingPage();
 	setENTRYHI(pageToWrite->pte_entryHI);
 	setENTRYLO(pageToWrite->pte_entryLO);
 	TLBWR();    //TODO replace with TLBWI() after a replacing algorithm is implemented	
 	contextSwitch(currentProcess);
 }
 
-pteEntry_t *getPageToWrite() {
+pteEntry_t *getMissingPage() {
     unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {

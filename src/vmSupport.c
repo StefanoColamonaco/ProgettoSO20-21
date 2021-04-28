@@ -1,5 +1,6 @@
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/const.h>
+#include <umps3/umps/cp0.h>
 
 #include "pandos_types.h"
 #include "pandos_const.h"
@@ -19,6 +20,11 @@ static int getVPNAddress(int index);
 static inline int getFreeAsid();
 
 static inline int getVPNAddress(int index);
+
+pteEntry_t *getMissingPage();
+
+static inline int frameIsOccupied(pteEntry_t* frame)
+
 
 
 
@@ -63,17 +69,35 @@ void initSwapTable() {
 
 
 
-
 void handlePageFault() {
     SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     support_t *supp = currentProcess->p_s.reg_v0;
-    unsigned int cause = currentProcess->p_s.cause;
-    if (cause == 0);
+    unsigned int cause = supp->sup_exceptState[0].cause;
+    if (cause == EXC_MOD) {
+        //treat as program trap
+    } else {
+        SYSCALL(PASSEREN, &swapSemaphore, 0, 0);
+        pteEntry_t *missingPage = getMissingPage();
+        swap_t frameToReplace = getFrameToReplace();
+        if(frameIsOccupied(frameToReplace)) {
+            updateFrame(frameToReplace);
 
-
-
+        }
+    }
 }
 
+/*determined by paging algorithm*/
+pteEntry_t* getFrameToReplace() {       
+    /*stub to replace*/
+}
+
+static inline int frameIsOccupied(pteEntry_t* frame) {
+    return (ENTRYHI_GET_ASID(frame->pte_entryHI) < 0);
+}
+
+void updateFrame(int frameToReplace) {
+
+}
 
 
 /*unit tests for this module. To move to another file*/
