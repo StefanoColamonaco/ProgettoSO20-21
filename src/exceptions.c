@@ -90,7 +90,8 @@ pteEntry_t *getMissingPage() {
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
         if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+            //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+            return &pageTable[i];
         }
     }
     SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
