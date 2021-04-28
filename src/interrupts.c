@@ -6,7 +6,7 @@
 
 #include "stateUtil.h"
 #include "interrupts.h"
-#include "systemCalls.h"
+#include "nucleousSystemCalls.h"
 
 #define PLTINT 1
 #define INTERTIMEINT 2

@@ -11,5 +11,4 @@ void passupOrDie(int exceptionType);     //detailed description in exception.c
 //void uTLB_RefillHandler(); //placeholder
 
 
-
 #endif //PROGETTOSO20_21_EXCEPTIONS_H
