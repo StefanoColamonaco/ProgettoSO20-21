@@ -23,7 +23,7 @@ static inline int getVPNAddress(int index);
 
 pteEntry_t *getMissingPage();
 
-static inline int frameIsOccupied(pteEntry_t* frame)
+static inline int frameIsOccupied(swap_t* frame);
 
 
 
@@ -78,27 +78,53 @@ void handlePageFault() {
     } else {
         SYSCALL(PASSEREN, &swapSemaphore, 0, 0);
         pteEntry_t *missingPage = getMissingPage();
-        swap_t frameToReplace = getFrameToReplace();
-        if(frameIsOccupied(frameToReplace)) {
-            updateFrame(frameToReplace);
-
+        swap_t* frameToReplace = getFrameToReplace();
+        if(frameIsOccupied(&frameToReplace)) {
+            //TODO following istructions must be atomic
+            markPTEntryNotValid(frameToReplace->sw_pte);
+            markTLBEntryNotValid(frameToReplace->sw_pte);
+            //TODO write backing store
         }
+        //TODO write currentProcess´ status from backing store to frame i
+        frameToReplace->sw_asid = currentProcess->p_supportStruct->sup_asid;
+        frameToReplace->sw_pte = missingPage;
+        frameToReplace->sw_pageNo = (missingPage->pte_entryHI & GETPAGENO) >> 12;
+        upd
+
+
     }
 }
 
 /*determined by paging algorithm*/
-pteEntry_t* getFrameToReplace() {       
+swap_t* getFrameToReplace() {       
     /*stub to replace*/
 }
 
-static inline int frameIsOccupied(pteEntry_t* frame) {
+/* static inline int frameIsOccupied(pteEntry_t* frame) {
     return (ENTRYHI_GET_ASID(frame->pte_entryHI) < 0);
+} */
+
+static inline int frameIsOccupied(swap_t* frame) {
+    return (frame->sw_asid != -1);
 }
 
-void updateFrame(int frameToReplace) {
-
+static inline void markPTEntryNotValid(pteEntry_t* entry) {
+    entry->pte_entryLO &= ~VALIDON;
 }
 
+markTLBEntryNotValid(pteEntry_t* entry) {
+    setENTRYHI(entry->pte_entryHI);
+    TLBP();
+    unsigned int indexReg = getINDEX();
+    if (indexReg >> 31 == OFF) {  //check p bit for valid index
+        //unsigned int index = (indexReg & 0xff00) >> 8;
+        TLBR();
+        unsigned int entryLO = getENTRYLO();
+        entryLO &= ~VALIDON;
+        setENTRYLO(entryLO);
+        TLBWI();
+    }
+}
 
 /*unit tests for this module. To move to another file*/
 
