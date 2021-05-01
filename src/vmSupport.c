@@ -6,6 +6,7 @@
 #include "pandos_const.h"
 #include "asl.h"
 #include "init.h"
+#include "scheduler.h"
 
 swap_t swapTable[POOLSIZE];
 int swapSemaphore = 1;
@@ -78,7 +79,8 @@ void handlePageFault() {
     } else {
         SYSCALL(PASSEREN, &swapSemaphore, 0, 0);
         pteEntry_t *missingPage = getMissingPage();
-        swap_t* frameToReplace = getFrameToReplace();
+        int frameIndexToReplace = getFrameIndexToReplace();
+        swap_t* frameToReplace = &swapTable[frameIndexToReplace];
         if(frameIsOccupied(&frameToReplace)) {
             //TODO following istructions must be atomic
             markPTEntryNotValid(frameToReplace->sw_pte);
@@ -86,11 +88,14 @@ void handlePageFault() {
             //TODO write backing store
         }
         //TODO write currentProcess´ status from backing store to frame i
-        frameToReplace->sw_asid = currentProcess->p_supportStruct->sup_asid;
-        frameToReplace->sw_pte = missingPage;
-        frameToReplace->sw_pageNo = (missingPage->pte_entryHI & GETPAGENO) >> 12;
-        upd
+        updateSwapPoolEntry(frameToReplace, currentProcess->p_supportStruct->sup_asid, missingPage);
+        
+        //TODO following steps must be atomic
+        markEntryPresentAtIndex(missingPage, frameIndexToReplace);
+        updateEntryInTLB(missingPage);
 
+        SYSCALL(VERHOGEN, &swapSemaphore, 0, 0);    
+        contextSwitch(currentProcess);   
 
     }
 }
@@ -112,7 +117,7 @@ static inline void markPTEntryNotValid(pteEntry_t* entry) {
     entry->pte_entryLO &= ~VALIDON;
 }
 
-markTLBEntryNotValid(pteEntry_t* entry) {
+static void markTLBEntryNotValid(pteEntry_t* entry) {
     setENTRYHI(entry->pte_entryHI);
     TLBP();
     unsigned int indexReg = getINDEX();
@@ -122,6 +127,29 @@ markTLBEntryNotValid(pteEntry_t* entry) {
         unsigned int entryLO = getENTRYLO();
         entryLO &= ~VALIDON;
         setENTRYLO(entryLO);
+        TLBWI();
+    }
+}
+
+updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
+    poolFrame->sw_asid = asid;
+    poolFrame->sw_pte = pageToAdd;
+    poolFrame->sw_pageNo = (pageToAdd->pte_entryHI & GETPAGENO) >> 12;
+}
+
+markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex) {
+    missingPage->pte_entryLO |= VALIDON;
+    missingPage->pte_entryLO &= ~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT;
+}
+
+
+static void updateEntryInTLB(pteEntry_t* entry) {
+    setENTRYHI(entry->pte_entryHI);
+    TLBP();
+    unsigned int indexReg = getINDEX();
+    if (indexReg >> 31 == OFF) {  //check p bit for valid index
+        TLBR();
+        setENTRYLO(entry->pte_entryLO);
         TLBWI();
     }
 }
