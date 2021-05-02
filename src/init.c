@@ -1,5 +1,6 @@
 #include <umps3/umps/cp0.h>
 #include <umps3/umps/types.h>
+#include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
 
 #include "init.h"
@@ -19,6 +20,10 @@ pcb_t *currentProcess;          //pointer to pcb that is in running state
 cpu_t globalStartT;
 cpu_t startT;
 int deviceSemaphores[DEVICE_NUM];   //last device is interval time
+/* Support level semaphores */
+semd_t printerSemaphores[N_DEV_PER_IL];
+semd_t termWriteSemaphores[N_DEV_PER_IL];
+semd_t termReadSemaphores[N_DEV_PER_IL];
 
 
 static inline void initDevSemaphores();
@@ -87,4 +92,18 @@ static inline void initDevSemaphores() {
     for (int i = 0; i < (DEVICE_NUM); i++){
         deviceSemaphores[i] = 0;
     }
+    for (int i = 0; i < (N_DEV_PER_IL); i++){
+        printerSemaphores[i].s_next = NULL;
+        termWriteSemaphores[i].s_next = NULL;
+        termReadSemaphores[i].s_next = NULL;
+
+        printerSemaphores[i].s_procQ = mkEmptyProcQ();
+        termWriteSemaphores[i].s_procQ = mkEmptyProcQ();
+        termReadSemaphores[i].s_procQ = mkEmptyProcQ();
+
+        printerSemaphores[i].s_semAdd = 0;
+        termWriteSemaphores[i].s_semAdd = 0;
+        termReadSemaphores[i].s_semAdd = 0;
+    }
+
 }

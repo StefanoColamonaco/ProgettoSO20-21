@@ -6,6 +6,7 @@
 #include "pcb.h"
 #include "stateUtil.h"
 #include "interrupts.h"
+#include "supportSystemCalls.h"
 
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
@@ -48,7 +49,7 @@ void handleSupportSystemcalls() {
 
 /* Wrapper for SYS2 at support level */
 void terminate() {
-  terminate_Process(currentProcess);
+  SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
 /* Returns the number of microseconds from system power on */
@@ -63,10 +64,19 @@ void get_TOD() {
 void write_To_Printer() {
   char *str = currentProcess -> p_s.reg_a1;
   int strlen = currentProcess -> p_s.reg_a2;
-
   if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
     terminate(currentProcess);
   }
+
+  support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
+  int asid = supp -> sup_asid;
+  int printerAddress;
+	unsigned int * base = (unsigned int *) (printerAddress);
+	unsigned int status;
+
+  SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
+
+  SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
   //note:
   //dobbiamoavere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
   //funzionamento analogo a print: caricamento di un carattere, attesa attraverso la sys5, lettura dello stato e carattere successivo
@@ -77,21 +87,47 @@ void write_To_Printer() {
 void write_To_Terminal() {
   char *str = currentProcess -> p_s.reg_a1;
   int strlen = currentProcess -> p_s.reg_a2;
-
   if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
     terminate(currentProcess);
   }
+
+  support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);     //verificare se serve sta cosa
+  int asid = supp -> sup_asid;
+  int terminalAddress;
+	unsigned int * base = (unsigned int *) (terminalAddress);
+	unsigned int status;
+	
+	SYSCALL(PASSEREN,&(termWriteSemaphores[asid]), 0, 0); 
+	while (*str != EOS) {
+		*(base + 3) = PRINTCHR | (((unsigned int) *str) << BYTELENGTH);
+		status = SYSCALL(wait_For_IO, TERMINT, 0, 0);
+		if ((status & TERMSTATMASK) != RECVD)
+			PANIC();
+		str++;	
+	}
+	SYSCALL(VERHOGEN,&(termWriteSemaphores[asid]), 0, 0); 
   //note:
   //come la sys 11 ma adattata alla scrittura su terminale
 }
 
+
 void read_From_Terminal() {
   char *str = currentProcess -> p_s.reg_a1;
   int strlen = currentProcess -> p_s.reg_a2;
-
   if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
     terminate(currentProcess);
   }
+
+  support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
+  int asid = supp -> sup_asid;
+  int terminalAddress;
+	unsigned int * base = (unsigned int *) (terminalAddress);
+	unsigned int status;
+	
+  SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
+
+  SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
+
   //note:
   //come sys12 ma legge da terminale invece di scrivere
   //mentre l'input viene letto il processo deve essere sospeso
