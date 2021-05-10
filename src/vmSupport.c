@@ -1,6 +1,8 @@
+#include <umps3/umps/cp0.h>
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/const.h>
-#include <umps3/umps/cp0.h>
+#include <umps3/umps/types.h>
+#include <umps3/umps/arch.h>
 
 #include "pandos_types.h"
 #include "pandos_const.h"
@@ -8,10 +10,13 @@
 #include "init.h"
 #include "scheduler.h"
 
+
 swap_t swapTable[POOLSIZE];
 int swapSemaphore = 1;
 
-unsigned int freeAsidBitmap = 0b11111111;   
+unsigned int freeAsidBitmap = 0b11111111; 
+
+static int frameIndexToReplace = 0;
 
 
 void initUprocPageTable(pcb_t *uproc);
@@ -82,17 +87,26 @@ void handlePageFault() {
         int frameIndexToReplace = getFrameIndexToReplace();
         swap_t* frameToReplace = &swapTable[frameIndexToReplace];
         if(frameIsOccupied(&frameToReplace)) {
-            //TODO following istructions must be atomic
+            //update with interrupts disabled
+            unsigned int oldStatus = getSTATUS();
+            setSTATUS(oldStatus & DISABLEINTS);
             markPTEntryNotValid(frameToReplace->sw_pte);
             markTLBEntryNotValid(frameToReplace->sw_pte);
+            setSTATUS(oldStatus);
+            writeFrameToBackingStore(frameToReplace);
             //TODO write backing store
         }
-        //TODO write currentProcess´ status from backing store to frame i
-        updateSwapPoolEntry(frameToReplace, currentProcess->p_supportStruct->sup_asid, missingPage);
+        //TODO read currentProcess´ status from backing store to frame i
+        getStatusFromBackingStore();
         
-        //TODO following steps must be atomic
+        updateSwapPoolEntry(frameToReplace, supp->sup_asid, missingPage);
+        
+        ///update with interrupts disabled
+        unsigned int oldStatus = getSTATUS();
+        setSTATUS(oldStatus & DISABLEINTS);
         markEntryPresentAtIndex(missingPage, frameIndexToReplace);
         updateEntryInTLB(missingPage);
+        setSTATUS(oldStatus);
 
         SYSCALL(VERHOGEN, &swapSemaphore, 0, 0);    
         contextSwitch(currentProcess);   
@@ -100,9 +114,11 @@ void handlePageFault() {
     }
 }
 
-/*determined by paging algorithm*/
-swap_t* getFrameToReplace() {       
-    /*stub to replace*/
+/*stub to edit at the end*/
+int getFrameIndexToReplace() {       
+    int result = frameIndexToReplace;
+    frameIndexToReplace = (frameIndexToReplace + 1)%POOLSIZE;
+    return result;
 }
 
 /* static inline int frameIsOccupied(pteEntry_t* frame) {
@@ -130,6 +146,13 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
         TLBWI();
     }
 }
+
+void writeFrameToBackingStore(swap_t* frame) {
+    devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, frame->sw_asid-1);
+    dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
+    dev->dtp.command = 
+}
+
 
 updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
     poolFrame->sw_asid = asid;
