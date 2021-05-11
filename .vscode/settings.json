@@ -5,6 +5,7 @@
         "stateutil.h": "c",
         "exceptions.h": "c",
         "init.h": "c",
-        "scheduler.h": "c"
+        "scheduler.h": "c",
+        "pandos_const.h": "c"
     }
 }

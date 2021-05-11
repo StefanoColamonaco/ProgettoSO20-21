@@ -10,6 +10,9 @@
 
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
+#include <umps3/umps/types.h>
+#include <umps3/umps/const.h>
+
 
 
 void handleSupportSystemcalls() {
@@ -49,6 +52,7 @@ void handleSupportSystemcalls() {
 
 /* Wrapper for SYS2 at support level */
 void terminate() {
+  //prima bisogna rilasciare i semafori del supporto
   SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
@@ -62,10 +66,12 @@ void get_TOD() {
 
 /* system call that manages the printing of an entire string passed as argument*/
 void write_To_Printer() {
-  char *str = currentProcess -> p_s.reg_a1;
+  char *virtAddr = currentProcess -> p_s.reg_a1;
   int strlen = currentProcess -> p_s.reg_a2;
-  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
-    terminate(currentProcess);
+  int retValue = 0;
+  
+  if(strlen <= 0 || strlen > 128 || virtAddr < (char*) UPROCSTARTADDR || ( virtAddr + strlen ) >= (char*) USERSTACKTOP/*indirizzo fuori dalla VM*/) {
+    SYSCALL(TERMINATE, 0, 0, 0);
   }
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
@@ -75,39 +81,54 @@ void write_To_Printer() {
 	unsigned int status;
 
   SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
-
+  while (*virtAddr != EOS) {
+		///stampa
+		//status = SYSCALL(IOWAIT,);
+		if ((status & TERMSTATMASK) != RECVD)
+			PANIC();
+		*virtAddr++;
+    retValue++;	
+	}
   SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
+   //se c' è errore sovrascrivo retvalue con - il valore dello status
+  currentProcess -> p_s.reg_v0 = retValue;
+  contextSwitch(currentProcess);
+  
+  
   //note:
-  //dobbiamoavere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
+  //dobbiamo avere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
   //funzionamento analogo a print: caricamento di un carattere, attesa attraverso la sys5, lettura dello stato e carattere successivo
   //se l'indirizzo della stringa da stampare è fuori dalla memoria virtuale del processo o la lunghezza della stringa è 0 terminiamo il processo
   //output: numero dei caratteri stampati in caso di successo, oppure bisogna restituire lo stato di errore negato (con - davanti)
 }
 
 void write_To_Terminal() {
-  char *str = currentProcess -> p_s.reg_a1;
+  char *virtAddr = currentProcess -> p_s.reg_a1;
   int strlen = currentProcess -> p_s.reg_a2;
-  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
-    terminate(currentProcess);
+  int retValue = 0;
+
+  if(strlen <= 0 || strlen > 128 || virtAddr < (char*) UPROCSTARTADDR || ( virtAddr + strlen ) >= (char*) USERSTACKTOP/*indirizzo fuori dalla VM*/) {
+    SYSCALL(TERMINATE, 0, 0, 0); 
   }
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);     //verificare se serve sta cosa
   int asid = supp -> sup_asid;
-  int terminalAddress;
+  int terminalAddress;   // DEVREG e asid...?
 	unsigned int * base = (unsigned int *) (terminalAddress);
 	unsigned int status;
 	
 	SYSCALL(PASSEREN,&(termWriteSemaphores[asid]), 0, 0); 
-	while (*str != EOS) {
-		*(base + 3) = PRINTCHR | (((unsigned int) *str) << BYTELENGTH);
-		status = SYSCALL(wait_For_IO, TERMINT, 0, 0);
+	while (*virtAddr != EOS) {
+		*(base + 3) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
+		status = SYSCALL(IOWAIT, TERMINT, 0, 0);
 		if ((status & TERMSTATMASK) != RECVD)
 			PANIC();
-		str++;	
+		*virtAddr++;
+    retValue++;
 	}
 	SYSCALL(VERHOGEN,&(termWriteSemaphores[asid]), 0, 0); 
-  //note:
-  //come la sys 11 ma adattata alla scrittura su terminale
+  currentProcess -> p_s.reg_v0 = retValue;
+  contextSwitch(currentProcess);
 }
 
 

@@ -150,7 +150,7 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
 void writeFrameToBackingStore(swap_t* frame) {
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, frame->sw_asid-1);
     dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
-    dev->dtp.command = 
+    //dev->dtp.command = 
 }
 
 
