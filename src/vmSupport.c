@@ -4,11 +4,16 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
+
 #include "pandos_types.h"
 #include "pandos_const.h"
 #include "asl.h"
 #include "init.h"
 #include "scheduler.h"
+#include "interrupts.h"
+
+#define READBLK 2 
+#define WRITEBLK 3
 
 
 swap_t swapTable[POOLSIZE];
@@ -28,6 +33,8 @@ static inline int getFreeAsid();
 static inline int getVPNAddress(int index);
 
 pteEntry_t *getMissingPage();
+
+int getMissingPageNumber();
 
 static inline int frameIsOccupied(swap_t* frame);
 
@@ -83,9 +90,12 @@ void handlePageFault() {
         //treat as program trap
     } else {
         SYSCALL(PASSEREN, &swapSemaphore, 0, 0);
-        pteEntry_t *missingPage = getMissingPage();
+
+        int missingPageNumber = getMissingPageNumber();
+        pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNumber];
         int frameIndexToReplace = getFrameIndexToReplace();
         swap_t* frameToReplace = &swapTable[frameIndexToReplace];
+
         if(frameIsOccupied(&frameToReplace)) {
             //update with interrupts disabled
             unsigned int oldStatus = getSTATUS();
@@ -94,11 +104,10 @@ void handlePageFault() {
             markTLBEntryNotValid(frameToReplace->sw_pte);
             setSTATUS(oldStatus);
             writeFrameToBackingStore(frameToReplace);
-            //TODO write backing store
         }
         //TODO read currentProcess´ status from backing store to frame i
-        getStatusFromBackingStore();
-        
+
+        getPageFromBackingStore(supp->sup_asid, missingPageNumber, missingPage);
         updateSwapPoolEntry(frameToReplace, supp->sup_asid, missingPage);
         
         ///update with interrupts disabled
@@ -148,9 +157,22 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
 }
 
 void writeFrameToBackingStore(swap_t* frame) {
-    devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, frame->sw_asid-1);
+    int devNo = frame->sw_asid-1;
+    devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
+    int blockNum = frame->sw_pageNo;
     dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
-    dev->dtp.command = 
+    dev->dtp.command = blockNum << 8 | WRITEBLK;
+    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, 0)], 0 ,0);
+}
+
+void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingPage) {
+    int devNo = asid - 1;
+    devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
+    int blockNum = missingPageNum;
+    dev->dtp.data0 = ENTRYLO_GET_PFN(missingPage->pte_entryLO);
+    dev->dtp.command = blockNum << 8 | READBLK;
+    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, 0)], 0 ,0);
+
 }
 
 
