@@ -66,12 +66,20 @@ void print(char *msg);
 
 int term_mut = 1;
 
+static support_t supp_structures[9];
+
 
 void test_phase_3() {
     //initialization of phase 3 data structures
     //load and start test processes
     //put the system on wait status
-    testGetFreeAsid();
+
+
+}
+
+
+void init_supp_structures() {
+	
 }
 
 
