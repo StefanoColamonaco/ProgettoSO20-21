@@ -12,6 +12,6 @@ void handleInterrupts();
 
 void releaseSemAndUpdateStatus(int deviceNo, unsigned int status);
 
-unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int termIsTRANSM);
+unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int termIsRECV);
 
 #endif
