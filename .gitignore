@@ -4,3 +4,8 @@
 *.h.ghc
 *.out
 *.exe
+.vscode/settings.json
+kernel
+kernel.core.umps
+kernel.stab.umps
+.vscode/settings.json
