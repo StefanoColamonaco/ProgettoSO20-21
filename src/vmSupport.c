@@ -38,6 +38,23 @@ int getMissingPageNumber();
 
 static inline int frameIsOccupied(swap_t* frame);
 
+static int getFrameIndexToReplace();
+
+static void markPTEntryNotValid(pteEntry_t* entry);
+
+static void markTLBEntryNotValid(pteEntry_t* entry);
+
+static void writeFrameToBackingStore(swap_t* frame);
+
+static void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingPage);
+
+static void updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd);
+
+static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex);
+
+static void updateEntryInTLB(pteEntry_t* entry);
+
+
 
 
 
@@ -46,7 +63,7 @@ void initUprocPageTable(pcb_t *uproc) {
     int vpn;
     for (int i = 0; i < USERPGTBLSIZE; i++) {
         vpn = getVPNAddress(i);
-        unsigned int entryHI = vpn << VPNSHIFT + asid << ASIDSHIFT;
+        unsigned int entryHI = (vpn << VPNSHIFT) + (asid << ASIDSHIFT);
         unsigned int entryLO = DIRTYON;
         uproc->p_supportStruct->sup_privatePgTbl[i].pte_entryHI = entryHI;
         uproc->p_supportStruct->sup_privatePgTbl[i].pte_entryLO = entryLO;
@@ -80,23 +97,26 @@ void initSwapTable() {
     }
 }
 
+void handleTLBInvalid(support_t* currentSupp) {
+    
+}
 
 
 void handlePageFault() {
     SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
-    support_t *supp = currentProcess->p_s.reg_v0;
+    support_t *supp = (support_t*)currentProcess->p_s.reg_v0;
     unsigned int cause = supp->sup_exceptState[0].cause;
-    if (cause == EXC_MOD) {
+    if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
     } else {
-        SYSCALL(PASSEREN, &swapSemaphore, 0, 0);
+        SYSCALL(PASSEREN, (int)&swapSemaphore, 0, 0);
 
         int missingPageNumber = getMissingPageNumber();
         pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNumber];
         int frameIndexToReplace = getFrameIndexToReplace();
         swap_t* frameToReplace = &swapTable[frameIndexToReplace];
 
-        if(frameIsOccupied(&frameToReplace)) {
+        if(frameIsOccupied(frameToReplace)) {
             //update with interrupts disabled
             unsigned int oldStatus = getSTATUS();
             setSTATUS(oldStatus & DISABLEINTS);
@@ -107,7 +127,7 @@ void handlePageFault() {
         }
         //TODO read currentProcess´ status from backing store to frame i
 
-        getPageFromBackingStore(supp->sup_asid, missingPageNumber, missingPage);
+        readPageFromBackingStore(supp->sup_asid, missingPageNumber, missingPage);
         updateSwapPoolEntry(frameToReplace, supp->sup_asid, missingPage);
         
         ///update with interrupts disabled
@@ -117,7 +137,7 @@ void handlePageFault() {
         updateEntryInTLB(missingPage);
         setSTATUS(oldStatus);
 
-        SYSCALL(VERHOGEN, &swapSemaphore, 0, 0);    
+        SYSCALL(VERHOGEN, (int)&swapSemaphore, 0, 0);    
         contextSwitch(currentProcess);   
 
     }
@@ -176,13 +196,13 @@ void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingP
 }
 
 
-updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
+void updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
     poolFrame->sw_asid = asid;
     poolFrame->sw_pte = pageToAdd;
     poolFrame->sw_pageNo = (pageToAdd->pte_entryHI & GETPAGENO) >> 12;
 }
 
-markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex) {
+static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex) {
     missingPage->pte_entryLO |= VALIDON;
     missingPage->pte_entryLO &= ~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT;
 }
@@ -199,21 +219,9 @@ static void updateEntryInTLB(pteEntry_t* entry) {
     }
 }
 
-/*unit tests for this module. To move to another file*/
-
-void testGetFreeAsid() {
-    extern unsigned int freeAsidBitmap;
-
-    freeAsidBitmap = 2;
-    int asid = getFreeAsid();
-    if (asid != 1) {
-        print("asid is incorrect: not 1\n");
-    }
-
-    freeAsidBitmap = 0;
-    asid = getFreeAsid();
-    if (asid != -1) {
-        print ("no free asid but -1 not returned\n");
-    }
-}
+//#define DEBUG
+#ifdef DEBUG
+#include "tests/vmSupportTest.h"
+#include "tests/vmSupportTest.c"
+#endif // DEBUG
 
