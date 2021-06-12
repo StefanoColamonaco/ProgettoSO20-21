@@ -4,7 +4,7 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
-
+#include "vmSupport.h"
 #include "pandos_types.h"
 #include "pandos_const.h"
 #include "asl.h"
@@ -20,15 +20,10 @@ swap_t swapTable[POOLSIZE];
 int swapSemaphore = 1;
 
 unsigned int freeAsidBitmap = 0b11111111; 
-
 static int frameIndexToReplace = 0;
 
 
-void initUprocPageTable(pcb_t *uproc);
-
 static int getVPNAddress(int index);
-
-static inline int getFreeAsid();
 
 static inline int getVPNAddress(int index);
 
@@ -60,8 +55,6 @@ static void markInvalidAndSave(swap_t* frameToReplace);
 
 
 
-
-
 void initUprocPageTable(pcb_t *uproc) {
     int asid = uproc->p_supportStruct->sup_asid;
     int vpn;
@@ -73,6 +66,15 @@ void initUprocPageTable(pcb_t *uproc) {
         uproc->p_supportStruct->sup_privatePgTbl[i].pte_entryLO = entryLO;
     }
 }
+
+
+void initSwapTable() {
+    for (int i = 0; i < POOLSIZE; i++) {
+        swapTable->sw_asid = -1;
+    }
+}
+
+
 
 /*check bitmap for free Asid. Returns -1 if none is free*/
 int getFreeAsid() {
@@ -92,13 +94,6 @@ int getVPNAddress(int index) {
         return 0xBFFFF; 
     }
     return 0x80000 + index;
-}
-
-
-void initSwapTable() {
-    for (int i = 0; i < POOLSIZE; i++) {
-        swapTable->sw_asid = -1;
-    }
 }
 
 
@@ -134,25 +129,29 @@ void handleTLBInvalid() {
     
     //TODO consider refactoring
     unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus & DISABLEINTS);
+    setSTATUS(oldStatus | DISABLEINTS);
     markEntryPresentAtIndex(missingPage, frameIndexToReplace);
     updateEntryInTLB(missingPage);
     setSTATUS(oldStatus);
 }
 
 
+
 void markInvalidAndSave(swap_t* frameToReplace) {
     unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus & DISABLEINTS);
+    setSTATUS(oldStatus | DISABLEINTS);
     markPTEntryNotValid(frameToReplace->sw_pte);
     markTLBEntryNotValid(frameToReplace->sw_pte);
     setSTATUS(oldStatus);
     writeFrameToBackingStore(frameToReplace);
 }
 
+
 void markValidAndUpdateTLB() {
 
 }
+
+
 
 int getFrameIndexToReplace() {       
     int result = frameIndexToReplace;
@@ -203,7 +202,6 @@ void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingP
     dev->dtp.data0 = ENTRYLO_GET_PFN(missingPage->pte_entryLO);
     dev->dtp.command = blockNum << 8 | READBLK;
     SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, 0)], 0 ,0);
-
 }
 
 
