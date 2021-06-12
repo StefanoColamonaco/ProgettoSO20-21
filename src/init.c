@@ -20,6 +20,8 @@ pcb_t *currentProcess;          //pointer to pcb that is in running state
 cpu_t globalStartT;
 cpu_t startT;
 int deviceSemaphores[DEVICE_NUM];   //last device is interval time
+
+
 /* Support level semaphores */
 semd_t printerSemaphores[N_DEV_PER_IL];
 semd_t termWriteSemaphores[N_DEV_PER_IL];
@@ -45,7 +47,6 @@ int main() {
     readyQueue = mkEmptyProcQ();
     clockSemaphore = 0;
 
-    initDevSemaphores();
     loadIntervalTimer(100000);
     initFirstProcess();
     scheduler();
