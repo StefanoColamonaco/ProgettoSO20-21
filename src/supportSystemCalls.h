@@ -9,7 +9,7 @@ void handleSupportSystemcalls();
 
 /* System caòòs for support evel */
 
-void terminate();
+void terminate_support();
 
 void get_TOD();
 

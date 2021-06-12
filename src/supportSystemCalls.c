@@ -28,7 +28,7 @@ void handleSupportSystemcalls() {
     /* Support level sys calls */
 
     case TERMINATE: {
-      terminate();
+      terminate_support();
       break;
     }
     case GET_TOD: {
@@ -51,9 +51,8 @@ void handleSupportSystemcalls() {
 }
 
 /* Wrapper for SYS2 at support level */
-void terminate() {
-  //prima bisogna rilasciare i semafori del supporto
-  SYSCALL(TERMPROCESS, 0, 0, 0);
+void terminate_support() {
+  SYSCALL(TERMPROCESS, 0, 0, 0);           //accertarsi che rilasci correttamente i semafori a livello supporto
 }
 
 /* Returns the number of microseconds from system power on */
@@ -113,18 +112,22 @@ void write_To_Terminal() {
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);     //verificare se serve sta cosa
   int asid = supp -> sup_asid;
-  int terminalAddress;   // DEVREG e asid...?
+  int terminalAddress = DEV_REG_ADDR(asid-1, TERMINT);                // controllare se è giusto
 	unsigned int * base = (unsigned int *) (terminalAddress);
-	unsigned int status;
+	int status;
 	
 	SYSCALL(PASSEREN,&(termWriteSemaphores[asid]), 0, 0); 
 	while (*virtAddr != EOS) {
 		*(base + 3) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, 0, 0);
-		if ((status & TERMSTATMASK) != RECVD)
-			PANIC();
-		*virtAddr++;
-    retValue++;
+		if ((status & TERMSTATMASK) != RECVD){
+      retValue = status * -1;
+      *virtAddr = EOS;
+      //PANIC();
+    }else{
+      *virtAddr++;
+      retValue++;
+    }	
 	}
 	SYSCALL(VERHOGEN,&(termWriteSemaphores[asid]), 0, 0); 
   currentProcess -> p_s.reg_v0 = retValue;
@@ -133,9 +136,8 @@ void write_To_Terminal() {
 
 
 void read_From_Terminal() {
-  char *str = currentProcess -> p_s.reg_a1;
-  int strlen = currentProcess -> p_s.reg_a2;
-  if(strlen <= 0 /*|| indirizzo fuori dalla VM*/) {
+  char *virtAddr = currentProcess -> p_s.reg_a1;
+  if(virtAddr < (char*) UPROCSTARTADDR) {
     terminate(currentProcess);
   }
 
@@ -144,11 +146,15 @@ void read_From_Terminal() {
   int terminalAddress;
 	unsigned int * base = (unsigned int *) (terminalAddress);
 	unsigned int status;
-	
+	int retValue = 0;
+
   SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
+  while(*virtAddr != EOS /*verificare se servono altri controlli di fine stringa*/) {
 
+  }
   SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
-
+  currentProcess -> p_s.reg_v0 = retValue;
+  contextSwitch(currentProcess);
   //note:
   //come sys12 ma legge da terminale invece di scrivere
   //mentre l'input viene letto il processo deve essere sospeso
