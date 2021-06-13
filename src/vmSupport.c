@@ -11,6 +11,7 @@
 #include "init.h"
 #include "scheduler.h"
 #include "interrupts.h"
+#include "exceptions.c"
 
 #define READBLK 2 
 #define WRITEBLK 3
@@ -25,11 +26,7 @@ static int frameIndexToReplace = 0;
 
 static int getVPNAddress(int index);
 
-static inline int getVPNAddress(int index);
-
-pteEntry_t *getMissingPage();
-
-int getMissingPageNumber();
+static void initSwapTable();
 
 static inline int frameIsOccupied(swap_t* frame);
 
@@ -68,12 +65,17 @@ void initUprocPageTable(pcb_t *uproc) {
 }
 
 
-void initSwapTable() {
+void initSwapStructs() {
+    initSwapTable();
+    swapSemaphore = 1;
+}
+
+
+static void initSwapTable() {
     for (int i = 0; i < POOLSIZE; i++) {
         swapTable->sw_asid = -1;
     }
 }
-
 
 
 /*check bitmap for free Asid. Returns -1 if none is free*/
@@ -113,7 +115,7 @@ void handlePageFault() {
 }
 
 
-void handleTLBInvalid() {
+static void handleTLBInvalid() {
     support_t *supp = (support_t*)currentProcess->p_s.reg_v0;
     int missingPageNumber = getMissingPageNumber();
     int frameIndexToReplace = getFrameIndexToReplace();
@@ -153,7 +155,7 @@ void markValidAndUpdateTLB() {
 
 
 
-int getFrameIndexToReplace() {       
+static int getFrameIndexToReplace() {       
     int result = frameIndexToReplace;
     frameIndexToReplace = (frameIndexToReplace + 1)%POOLSIZE;
     return result;
@@ -185,7 +187,7 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
 }
 
 
-void writeFrameToBackingStore(swap_t* frame) {
+static void writeFrameToBackingStore(swap_t* frame) {
     int devNo = frame->sw_asid-1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
@@ -195,7 +197,7 @@ void writeFrameToBackingStore(swap_t* frame) {
 }
 
 
-void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingPage) {
+static void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingPage) {
     int devNo = asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = missingPageNum;
@@ -205,7 +207,7 @@ void readPageFromBackingStore(int asid, int missingPageNum, pteEntry_t *missingP
 }
 
 
-void updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
+static void updateSwapPoolEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
     poolFrame->sw_asid = asid;
     poolFrame->sw_pte = pageToAdd;
     poolFrame->sw_pageNo = (pageToAdd->pte_entryHI & GETPAGENO) >> 12;

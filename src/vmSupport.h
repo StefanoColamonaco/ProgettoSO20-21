@@ -7,6 +7,6 @@ int getFreeAsid();
 
 void initUprocPageTable(pcb_t *uproc);
 
-void initSwapPool();
+void initSwapStructs();
 
 #endif //PROGETTOSO20_21_VMSUPPORT_H
