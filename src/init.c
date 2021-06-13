@@ -28,7 +28,6 @@ semd_t termWriteSemaphores[N_DEV_PER_IL];
 semd_t termReadSemaphores[N_DEV_PER_IL];
 
 
-static inline void initDevSemaphores();
 
 static passupvector_t *initPassupVector();
 
@@ -36,7 +35,6 @@ static pcb_t *initFirstProcess();
 
 static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
 
-extern void uTLB_RefillHandler();
 
 int main() {
     initPassupVector();  
@@ -89,22 +87,3 @@ inline void loadIntervalTimer (unsigned int timeInMicroSecs) {
     LDIT(timeInMicroSecs);
 }
 
-static inline void initDevSemaphores() {
-    for (int i = 0; i < (DEVICE_NUM); i++){
-        deviceSemaphores[i] = 0;
-    }
-    for (int i = 0; i < (N_DEV_PER_IL); i++){
-        printerSemaphores[i].s_next = NULL;
-        termWriteSemaphores[i].s_next = NULL;
-        termReadSemaphores[i].s_next = NULL;
-
-        printerSemaphores[i].s_procQ = mkEmptyProcQ();
-        termWriteSemaphores[i].s_procQ = mkEmptyProcQ();
-        termReadSemaphores[i].s_procQ = mkEmptyProcQ();
-
-        printerSemaphores[i].s_semAdd = 0;
-        termWriteSemaphores[i].s_semAdd = 0;
-        termReadSemaphores[i].s_semAdd = 0;
-    }
-
-}
