@@ -6,6 +6,7 @@
 #include <umps3/umps/cp0.h>
 #include "print.h"
 
+#include "pcb.h"
 #include "tests/vmSupportTest.h"
 #include "vmSupport.h"
 #include "init.h"
@@ -21,13 +22,12 @@ static void initUProcs();
 
 static void init_uproc_state(int asid);
 
-static void init_supp_structures(int asid);
+static void init_uproc_support(int asid);
 
 
 
 void test_phase_3() {
-	initSwapTable();
-	initSwapSemaphore();
+	initSwapStructs();
 	initDevSemaphores();
 	initUProcs();
 	SYSCALL(TERMPROCESS, 0, 0, 0);
