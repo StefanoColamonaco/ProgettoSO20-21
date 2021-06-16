@@ -75,7 +75,7 @@ void write_To_Printer() {
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
   int asid = supp -> sup_asid;
-  int printerAddress;
+  int printerAddress = DEV_REG_ADDR(PRINTINTERRUPT,asid-1); ;
 	unsigned int * base = (unsigned int *) (printerAddress);
 	unsigned int status;
 
@@ -112,7 +112,7 @@ void write_To_Terminal() {
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);     //verificare se serve sta cosa
   int asid = supp -> sup_asid;
-  int terminalAddress = DEV_REG_ADDR(asid-1, TERMINT);                // controllare se è giusto
+  int terminalAddress = DEV_REG_ADDR(TERMINT,asid-1);                // controllare se è giusto
 	unsigned int * base = (unsigned int *) (terminalAddress);
 	int status;
 	
@@ -121,7 +121,7 @@ void write_To_Terminal() {
 		*(base + 3) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, 0, 0);
 		if ((status & TERMSTATMASK) != RECVD){
-      retValue = status * -1;
+      retValue = status * -1;                                         //da controllare manuale umps
       *virtAddr = EOS;
       //PANIC();
     }else{
@@ -143,13 +143,13 @@ void read_From_Terminal() {
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
   int asid = supp -> sup_asid;
-  int terminalAddress;
+  int terminalAddress = DEV_REG_ADDR(TERMINT,asid-1); ;
 	unsigned int * base = (unsigned int *) (terminalAddress);
 	unsigned int status;
 	int retValue = 0;
 
   SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
-  while(*virtAddr != EOS /*verificare se servono altri controlli di fine stringa*/) {
+  while(*virtAddr != EOS /*verificare se servono altri controlli di fine stringa es \n \r etc*/) {
 
   }
   SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 

@@ -45,7 +45,7 @@ void handleExceptions() {
         case EXC_RI:
         case EXC_CPU:
         case EXC_OV:
-            passupOrDie(GENERALEXCEPT);
+            passupOrDie(GENERALEXCEPT);        //handler support level
             break;
 
     }
