@@ -119,7 +119,7 @@ void handlePageFault() {
     unsigned int cause = supp->sup_exceptState[0].cause;
     if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
-    } else {                    //page fault on load or store
+    } else {                    //page fault on load or store. at this point the TLB has already been refilled
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
