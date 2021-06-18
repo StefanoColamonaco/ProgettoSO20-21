@@ -8,7 +8,4 @@ void TLBExceptionHandler();       //handler for exception related to TLB (it kil
 
 void passupOrDie(int exceptionType);     //detailed description in exception.c
 
-void uTLB_RefillHandler();
-
-
 #endif //PROGETTOSO20_21_EXCEPTIONS_H

@@ -6,4 +6,10 @@
 
 void handleSupportLevelExceptions();        //entry point for support level exceptions handling
 
+void uTLB_RefillHandler();
+
+int *getMissingPageNumber();
+
+pteEntry_t *getMissingPage();
+
 #endif //PROGETTOSO20_21_SYSSUPPORT_H

@@ -10,7 +10,7 @@ extern int *mutex;
 
 /* System calls handler */
 
-void handleNucleusSystemcalls();
+void handleNucleousSystemcalls();
 
 /* System calls 1-8 */
 

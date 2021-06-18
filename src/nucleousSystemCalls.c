@@ -14,7 +14,7 @@
 int *mutex = 0;
 
 /*Handler for exceptions labeled as system calls*/
-void handleNucleusSystemcalls() {
+void handleNucleousSystemcalls() {
   state_t *systemState = (state_t *) BIOSDATAPAGE;
   int currentSyscall = systemState -> reg_a0;                    
   if(systemState->status & USERPON){                      //user mode -> trap/exception

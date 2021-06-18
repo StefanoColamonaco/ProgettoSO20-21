@@ -12,6 +12,7 @@
 #include "scheduler.h"
 #include "interrupts.h"
 #include "exceptions.c"
+#include "sysSupport.h"
 
 #define READBLK 2 
 #define WRITEBLK 3

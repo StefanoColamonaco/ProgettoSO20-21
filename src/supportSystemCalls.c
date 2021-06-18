@@ -22,7 +22,7 @@ void handleSupportSystemcalls() {
   //necessario il controllo per la user mode?
 
   copyState(systemState, &(currentProcess -> p_s));
-  currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;     //(+4 bytes)
+  currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;
 
   switch(currentSyscall){
     /* Support level sys calls */

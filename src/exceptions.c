@@ -38,14 +38,14 @@ void handleExceptions() {
             break;
 
         case EXC_SYS:
-            handleNucleusSystemcalls();
+            handleNucleousSystemcalls();
             break;
 
         case EXC_BP:
         case EXC_RI:
         case EXC_CPU:
         case EXC_OV:
-            passupOrDie(GENERALEXCEPT);        //handler support level
+            passupOrDie(GENERALEXCEPT);
             break;
 
     }
@@ -67,46 +67,10 @@ void passupOrDie(int exceptionType){
     LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].stackPtr,
           currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].status,
           currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].pc);
-    // here call the support level general exception handler (then the support level systemcalls handler)
+    handleSupportLevelExceptions();
   }
 
   terminate_Process(currentProcess);
   scheduler();
 
-}
-
-//     ATTENZIONE   sta cosa va spostata da qua e messa nella parte di support
-
-static pteEntry_t *getMissingPage();
-
-void uTLB_RefillHandler () {
-	pteEntry_t *pageToWrite = getMissingPage();
-	setENTRYHI(pageToWrite->pte_entryHI);
-	setENTRYLO(pageToWrite->pte_entryLO);
-	TLBWR();    //TODO replace with TLBWI() after a replacing algorithm is implemented	
-	contextSwitch(currentProcess);
-}
-
-int *getMissingPageNumber() {
-    unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
-    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    for (int i = 0; i < MAXPAGES; i++) {
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
-            return i;
-        }
-    }
-    SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
-}
-
-pteEntry_t *getMissingPage() {
-    unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
-    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    for (int i = 0; i < MAXPAGES; i++) {
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
-            return &pageTable[i];
-        }
-    }
-    SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
 }
