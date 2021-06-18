@@ -18,6 +18,7 @@
 
 
 swap_t swapTable[POOLSIZE];
+unsigned int swapFloor;
 
 int swapSem = 1;
 semd_t swapSemStruct;
@@ -72,16 +73,16 @@ void initUprocPageTable(pcb_t *uproc) {
 
 void initSwapStructs() {
     initSwapTable();
-    initSwapSem();
-}
-
-
-static void initSwapSem() {
     swapSem = 1;
-    swapSemStruct.s_semAdd = &swapSem;
-    swapSemStruct.s_procQ = mkEmptyProcQ();
-    swapSemStruct.s_next = NULL;
 }
+
+
+// static void initSwapSem() {
+//     swapSem = 1;
+//     swapSemStruct.s_semAdd = &swapSem;
+//     swapSemStruct.s_procQ = mkEmptyProcQ();
+//     swapSemStruct.s_next = NULL;
+// }
 
 
 static void initSwapTable() {
@@ -115,7 +116,7 @@ int getVPNAddress(int index) {
 
 /*pager*/
 void handlePageFault() {
-    support_t *supp = (support_t*)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+    support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[0].cause;
     if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
@@ -132,7 +133,7 @@ static void handleTLBInvalid(support_t *supp) {
     int missingPageNumber = getMissingPageNumber();
     int frameIndexToReplace = getFrameIndexToReplace();
     pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNumber];
-    swap_t* frameToReplace = &swapTable[frameIndexToReplace];
+    swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
     if(frameIsOccupied(frameToReplace)) {
         markInvalidAndSave(frameToReplace, frameIndexToReplace);
@@ -146,7 +147,7 @@ static void handleTLBInvalid(support_t *supp) {
 
 
 
-static void markInvalidAndSave(swap_t* frameToReplace, int frameIndexToReplace) {
+static void markInvalidAndSave(swap_t *frameToReplace, int frameIndexToReplace) {
     unsigned int oldStatus = getSTATUS();
     setSTATUS(oldStatus | DISABLEINTS);
     markPTEntryNotValid(frameToReplace->sw_pte);
@@ -166,7 +167,11 @@ static void markValidAndUpdateTLB(pteEntry_t *page, int frameIndex) {
 
 
 
-static int getFrameIndexToReplace() {       
+static int getFrameIndexToReplace() {
+    for (int i = 0; i < POOLSIZE; i++) {
+        if (swapTable[i].sw_asid == -1)
+            return i;
+    }
     int result = frameIndexToReplace;
     frameIndexToReplace = (frameIndexToReplace + 1)%POOLSIZE;
     return result;
@@ -199,7 +204,7 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
 
 
 static inline int frameAddrInPool(int frameIndex) {
-    return FRAMEPOOLSTART + frameIndex * 4096;
+    return swapFloor + frameIndex * 4096;
 }
 
 
@@ -215,7 +220,6 @@ static void writeFromPoolToDev(swap_t* frame, int frameIndex) {
 
 
 static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameIndex) {
-
     pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];
     int devNo = supp->sup_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
@@ -240,7 +244,8 @@ static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex) {
 }
 
 
-static void updateEntryInTLB(pteEntry_t* entry) {
+
+void updateEntryInTLB(pteEntry_t* entry) {
     setENTRYHI(entry->pte_entryHI);
     TLBP();
     unsigned int indexReg = getINDEX();
@@ -250,6 +255,47 @@ static void updateEntryInTLB(pteEntry_t* entry) {
         TLBWI();
     }
 }
+
+
+void removePagesFromTLB(int asid) {
+    support_t* supp = (support_t*)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
+    for (int i = 0; i < MAXPAGES; i++) {
+        if (PTEentryIsValid(&supp->sup_privatePgTbl[i])) {
+            markTLBEntryNotValid(&supp->sup_privatePgTbl[i]);
+        }
+    }
+}
+
+
+
+int PTEentryIsValid(pteEntry_t *entry) {
+    return (entry->pte_entryLO & ENTRYLO_VALID) >> ENTRYLO_VALID_BIT;
+}
+
+
+
+void markReadOnlyPages(support_t *supp) {
+    unsigned int *text_mem_start = (unsigned int *)0x0008;    
+    unsigned int *text_mem_size = (unsigned int *)0x000C
+;
+
+    for (int i = 0; i < MAXPAGES; i++){
+        pteEntry_t *page = &supp->sup_privatePgTbl[i];
+        memaddr vpn = ENTRYHI_GET_VPN(page->pte_entryHI);
+        if (vpn >= *text_mem_start && vpn < *text_mem_start + *text_mem_size) {
+            page->pte_entryLO &= ~DIRTYON;
+        }
+    }
+}
+
+
+void setSwapFloor() {
+    unsigned int *data_mem_start = (unsigned int *)0x0018;
+    unsigned int *data_mem_size = (unsigned int *)0x001C;
+    swapFloor = *data_mem_start + *data_mem_size;
+}
+
+
 
 
 //#define DEBUG
