@@ -12,6 +12,9 @@
 #include "init.h"
 #include "exceptions.h"
 
+int masterSem = 0;
+
+
 static state_t uproc_state[UPROCMAX + 1];	//this way we can index directly by ASID. 0 is unused
 static support_t uproc_supp[UPROCMAX + 1];
 
@@ -29,27 +32,18 @@ static void init_uproc_support(int asid);
 void test_phase_3() {
 	initSwapStructs();
 	initDevSemaphores();
+	setSwapFloor();
+	masterSem = 0;
 	initUProcs();
+	startUProcs();
+	waitForUprocs();
 	SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
 
 static void initDevSemaphores() {
     for (int i = 0; i < (DEVICE_NUM); i++){
-        deviceSemaphores[i] = 0;
-    }
-    for (int i = 0; i < (N_DEV_PER_IL); i++){
-        printerSemaphores[i].s_next = NULL;
-        termWriteSemaphores[i].s_next = NULL;
-        termReadSemaphores[i].s_next = NULL;
-
-        printerSemaphores[i].s_procQ = mkEmptyProcQ();
-        termWriteSemaphores[i].s_procQ = mkEmptyProcQ();
-        termReadSemaphores[i].s_procQ = mkEmptyProcQ();
-
-        printerSemaphores[i].s_semAdd = 0;
-        termWriteSemaphores[i].s_semAdd = 0;
-        termReadSemaphores[i].s_semAdd = 0;
+        deviceSemaphores[i] = 1;
     }
 }
 
@@ -59,6 +53,7 @@ void initUProcs() {
 		int asid = getFreeAsid();
 		init_uproc_state(asid);
 		init_uproc_support(asid);
+		markReadOnlyPages(&uproc_supp[asid]);
 	}
 }
 
@@ -80,4 +75,25 @@ static void init_supp_structures(int asid) {
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = &(uproc_supp[asid].sup_stackGen[499]);
 }
+
+
+static void startUProcs() {
+	for (int i = 1; i < UPROCMAX; i++) {
+		SYSCALL(1, &uproc_state[i], &uproc_supp[i], 0);
+	}
+}
+
+
+static void waitForUprocs() {
+	for (int i = 0; i < UPROCMAX; i++)
+	{
+		SYSCALL(PASSEREN, &masterSem, 0, 0);
+	}
+}
+
+
+void notifyTerminated() {
+	SYSCALL(VERHOGEN, &masterSem, 0, 0);
+}
+
 
