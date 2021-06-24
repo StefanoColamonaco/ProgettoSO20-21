@@ -4,8 +4,11 @@
 void handleSupportSystemcalls();
 
 #define PRINTCHR 2
+#define RECVCHR 2
 #define RECVD 5
 #define TERMSTATMASK 0xFF
+#define PRINTSTATMASK 0xF
+#define PRINTDEVREADY 1
 
 /* System caòòs for support evel */
 

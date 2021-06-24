@@ -81,12 +81,16 @@ void write_To_Printer() {
 
   SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
   while (*virtAddr != EOS) {
-		///stampa
-		//status = SYSCALL(IOWAIT,);
-		if ((status & TERMSTATMASK) != RECVD)
-			PANIC();
-		*virtAddr++;
-    retValue++;	
+    *base = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
+		status = SYSCALL(IOWAIT, PRINTINTERRUPT, asid-1, 0);
+		if ((status & PRINTSTATMASK) != PRINTDEVREADY){
+      retValue = status * -1;                                         //da controllare manuale umps
+      *virtAddr = EOS;
+      //PANIC();
+    }else{
+      *virtAddr++;
+      retValue++;
+    }	
 	}
   SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
    //se c' è errore sovrascrivo retvalue con - il valore dello status
@@ -118,8 +122,8 @@ void write_To_Terminal() {
 	
 	SYSCALL(PASSEREN,&(termWriteSemaphores[asid]), 0, 0); 
 	while (*virtAddr != EOS) {
-		*(base + 3) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
-		status = SYSCALL(IOWAIT, TERMINT, 0, 0);
+		*(base + TRANCOMMAND) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
+		status = SYSCALL(IOWAIT, TERMINT, asid-1, FALSE);
 		if ((status & TERMSTATMASK) != RECVD){
       retValue = status * -1;                                         //da controllare manuale umps
       *virtAddr = EOS;
@@ -150,7 +154,16 @@ void read_From_Terminal() {
 
   SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
   while(*virtAddr != EOS /*verificare se servono altri controlli di fine stringa es \n \r etc*/) {
-
+    *(base + RECVCOMMAND) = RECVCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
+    status = SYSCALL(IOWAIT, TERMINT, asid-1, TRUE);
+		if ((status & TERMSTATMASK) != RECVD){
+      retValue = status * -1;                                         //da controllare manuale umps
+      *virtAddr = EOS;
+      //PANIC();
+    }else{
+      *virtAddr++;
+      retValue++;
+    }	
   }
   SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
   currentProcess -> p_s.reg_v0 = retValue;
