@@ -7,6 +7,7 @@
 #include "print.h"
 
 #include "pcb.h"
+#include "sysSupport.h"
 #include "tests/vmSupportTest.h"
 #include "vmSupport.h"
 #include "init.h"
