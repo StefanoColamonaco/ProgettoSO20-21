@@ -6,7 +6,7 @@
 #include "pcb.h"
 #include "asl.h"
 
-extern int *mutex;      
+extern int *mutex;
 
 /* System calls handler */
 
@@ -14,7 +14,7 @@ void handleNucleousSystemcalls();
 
 /* System calls 1-8 */
 
-void  create_Process();
+void create_Process();
 
 void terminate_Process();
 
@@ -22,7 +22,7 @@ void passeren();
 
 void verhogen();
 
-void  wait_For_IO();
+void wait_For_IO();
 
 void get_Cpu_Time();
 
@@ -33,6 +33,5 @@ void wait_For_Clock();
 void get_support_data();
 
 void blockCurrentProcessAt(int *sem);
-
 
 #endif //PROGETTOSO20_21_SYSTEMCALLS_H
