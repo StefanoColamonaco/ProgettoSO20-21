@@ -4,6 +4,7 @@
 #include "pandos_types.h"
 
 #include "init.h"
+#include "sysSupport.h"
 #include "scheduler.h"
 #include "asl.h"
 #include "pcb.h"

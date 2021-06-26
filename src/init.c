@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "exceptions.h"
+#include "sysSupport.h"
 #include "scheduler.h"
 #include "stateUtil.h"
 #include "pcb.h"

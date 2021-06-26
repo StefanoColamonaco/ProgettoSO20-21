@@ -4,12 +4,13 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
-#include "vmSupport.h"
 #include "pandos_types.h"
 #include "pandos_const.h"
-#include "asl.h"
 #include "init.h"
+#include "asl.h"
+#include "pcb.h"
 #include "scheduler.h"
+#include "vmSupport.h"
 #include "interrupts.h"
 #include "exceptions.c"
 #include "sysSupport.h"
@@ -31,7 +32,7 @@ static int frameIndexToReplace = 0;
 
 static int getVPNAddress(int index);
 
-static void initSwapSem();
+//static void initSwapSem();
 
 static void initSwapTable();
 
@@ -51,12 +52,15 @@ static void updateSwapTableEntry(swap_t *poolFrame, int asid, pteEntry_t* pageTo
 
 static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex);
 
+static void markValidAndUpdateTLB(pteEntry_t *page, int frameIndex);
+
 static void updateEntryInTLB(pteEntry_t* entry);
 
 static void handleTLBInvalid();
 
 static void markInvalidAndSave(swap_t* frameToReplace, int frameIndexToReplace);
 
+int PTEentryIsValid(pteEntry_t *entry);
 
 
 void initUprocPageTable(pcb_t *uproc) {
@@ -131,16 +135,16 @@ void handlePageFault() {
 
 
 static void handleTLBInvalid(support_t *supp) {
-    int missingPageNumber = getMissingPageNumber();
+    int* missingPageNumber = getMissingPageNumber();
     int frameIndexToReplace = getFrameIndexToReplace();
-    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNumber];
+    pteEntry_t *missingPage = &supp->sup_privatePgTbl[*missingPageNumber];
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
     if(frameIsOccupied(frameToReplace)) {
         markInvalidAndSave(frameToReplace, frameIndexToReplace);
     }
 
-    writeFromDevToPool(supp, missingPageNumber, frameIndexToReplace);
+    writeFromDevToPool(supp, *missingPageNumber, frameIndexToReplace);
     updateSwapTableEntry(frameToReplace, supp->sup_asid, missingPage);
     
     markValidAndUpdateTLB(missingPage, frameIndexToReplace);
@@ -221,7 +225,7 @@ static void writeFromPoolToDev(swap_t* frame, int frameIndex) {
 
 
 static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameIndex) {
-    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];
+    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];                             //unused missingPage 
     int devNo = supp->sup_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = missingPageNum;

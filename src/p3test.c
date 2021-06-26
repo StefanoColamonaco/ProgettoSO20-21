@@ -24,6 +24,10 @@ static void initDevSemaphores();
 
 static void initUProcs();
 
+static void startUProcs();
+
+static void waitForUprocs();
+
 static void init_uproc_state(int asid);
 
 static void init_uproc_support(int asid);
@@ -67,20 +71,20 @@ static void init_uproc_state(int asid) {
 	uproc_state[asid].entry_hi = asid << ASIDSHIFT;
 }
 
-static void init_supp_structures(int asid) {
+static void init_uproc_support(int asid) {
 	uproc_supp[asid].sup_asid = asid;
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)uTLB_RefillHandler; 
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleExceptions; 
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].status = TEBITON | IECON; //local timer and interrupts enabled, kernel mode by default
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
-	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = &(uproc_supp[asid].sup_stackGen[499]);
+	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
+	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackGen[499]);
 }
 
 
 static void startUProcs() {
 	for (int i = 1; i < UPROCMAX; i++) {
-		SYSCALL(1, &uproc_state[i], &uproc_supp[i], 0);
+		SYSCALL(1, (unsigned int) &uproc_state[i], (unsigned int) &uproc_supp[i], 0);
 	}
 }
 
@@ -88,13 +92,13 @@ static void startUProcs() {
 static void waitForUprocs() {
 	for (int i = 0; i < UPROCMAX; i++)
 	{
-		SYSCALL(PASSEREN, &masterSem, 0, 0);
+		SYSCALL(PASSEREN, (unsigned int) &masterSem, 0, 0);
 	}
 }
 
 
 void notifyTerminated() {
-	SYSCALL(VERHOGEN, &masterSem, 0, 0);
+	SYSCALL(VERHOGEN, (unsigned int) &masterSem, 0, 0);
 }
 
 
