@@ -4,7 +4,10 @@
 *.h.ghc
 *.out
 *.exe
+*.umps
 .vscode/settings.json
+.swo
+.swp
 kernel
 kernel.core.umps
 kernel.stab.umps
