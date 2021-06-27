@@ -10,7 +10,9 @@ void handleSupportSystemcalls();
 #define PRINTSTATMASK 0xF
 #define PRINTDEVREADY 1
 
-/* System caòòs for support evel */
+/* System calls for support level */
+
+void handleSupportSystemcalls();
 
 void terminate_support();
 

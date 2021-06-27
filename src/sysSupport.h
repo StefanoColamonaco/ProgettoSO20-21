@@ -10,6 +10,6 @@ void uTLB_RefillHandler();
 
 int *getMissingPageNumber();
 
-pteEntry_t *getMissingPage();
+static pteEntry_t *getMissingPage();
 
 #endif //PROGETTOSO20_21_SYSSUPPORT_H

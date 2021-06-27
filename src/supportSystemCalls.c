@@ -65,7 +65,7 @@ void get_TOD() {
 
 /* system call that manages the printing of an entire string passed as argument*/
 void write_To_Printer() {
-  char *virtAddr = currentProcess -> p_s.reg_a1;
+  char *virtAddr = (char*) (currentProcess -> p_s.reg_a1);
   int strlen = currentProcess -> p_s.reg_a2;
   int retValue = 0;
   
@@ -79,7 +79,7 @@ void write_To_Printer() {
 	unsigned int * base = (unsigned int *) (printerAddress);
 	unsigned int status;
 
-  SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
+  SYSCALL(PASSEREN,(unsigned int) &(termReadSemaphores[asid]), 0, 0); 
   while (*virtAddr != EOS) {
     *base = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, PRINTINTERRUPT, asid-1, 0);
@@ -88,11 +88,11 @@ void write_To_Printer() {
       *virtAddr = EOS;
       //PANIC();
     }else{
-      *virtAddr++;
+      virtAddr++;
       retValue++;
     }	
 	}
-  SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
+  SYSCALL(VERHOGEN,(unsigned int) &(termReadSemaphores[asid]), 0, 0); 
    //se c' è errore sovrascrivo retvalue con - il valore dello status
   currentProcess -> p_s.reg_v0 = retValue;
   contextSwitch(currentProcess);
@@ -106,7 +106,7 @@ void write_To_Printer() {
 }
 
 void write_To_Terminal() {
-  char *virtAddr = currentProcess -> p_s.reg_a1;
+  char *virtAddr = (char*) (currentProcess -> p_s.reg_a1);
   int strlen = currentProcess -> p_s.reg_a2;
   int retValue = 0;
 
@@ -120,7 +120,7 @@ void write_To_Terminal() {
 	unsigned int * base = (unsigned int *) (terminalAddress);
 	int status;
 	
-	SYSCALL(PASSEREN,&(termWriteSemaphores[asid]), 0, 0); 
+	SYSCALL(PASSEREN,(unsigned int) &(termWriteSemaphores[asid]), 0, 0); 
 	while (*virtAddr != EOS) {
 		*(base + TRANCOMMAND) = PRINTCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, asid-1, FALSE);
@@ -129,20 +129,20 @@ void write_To_Terminal() {
       *virtAddr = EOS;
       //PANIC();
     }else{
-      *virtAddr++;
+      virtAddr++;
       retValue++;
     }	
 	}
-	SYSCALL(VERHOGEN,&(termWriteSemaphores[asid]), 0, 0); 
+	SYSCALL(VERHOGEN,(unsigned int) &(termWriteSemaphores[asid]), 0, 0); 
   currentProcess -> p_s.reg_v0 = retValue;
   contextSwitch(currentProcess);
 }
 
 
 void read_From_Terminal() {
-  char *virtAddr = currentProcess -> p_s.reg_a1;
+  char *virtAddr = (char*) (currentProcess -> p_s.reg_a1);
   if(virtAddr < (char*) UPROCSTARTADDR) {
-    terminate(currentProcess);
+    SYSCALL(TERMINATE, 0, 0, 0);
   }
 
   support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);      //verificare se serve sta cosa
@@ -152,7 +152,7 @@ void read_From_Terminal() {
 	unsigned int status;
 	int retValue = 0;
 
-  SYSCALL(PASSEREN,&(termReadSemaphores[asid]), 0, 0); 
+  SYSCALL(PASSEREN,(unsigned int) &(termReadSemaphores[asid]), 0, 0); 
   while(*virtAddr != EOS /*verificare se servono altri controlli di fine stringa es \n \r etc*/) {
     *(base + RECVCOMMAND) = RECVCHR | (((unsigned int) *virtAddr) << BYTELENGTH);
     status = SYSCALL(IOWAIT, TERMINT, asid-1, TRUE);
@@ -161,11 +161,11 @@ void read_From_Terminal() {
       *virtAddr = EOS;
       //PANIC();
     }else{
-      *virtAddr++;
+      virtAddr++;
       retValue++;
     }	
   }
-  SYSCALL(VERHOGEN,&(termReadSemaphores[asid]), 0, 0); 
+  SYSCALL(VERHOGEN,(unsigned int) &(termReadSemaphores[asid]), 0, 0); 
   currentProcess -> p_s.reg_v0 = retValue;
   contextSwitch(currentProcess);
   //note:

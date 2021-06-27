@@ -12,7 +12,6 @@
 #include "scheduler.h"
 #include "vmSupport.h"
 #include "interrupts.h"
-#include "exceptions.c"
 #include "sysSupport.h"
 
 #define READBLK 2 

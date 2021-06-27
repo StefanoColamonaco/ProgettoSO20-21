@@ -37,7 +37,7 @@ int *getMissingPageNumber() {
     SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
 }
 
-pteEntry_t *getMissingPage() {
+static pteEntry_t *getMissingPage() {
     unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
