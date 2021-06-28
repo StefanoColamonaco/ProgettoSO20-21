@@ -8,7 +8,7 @@ void handleSupportLevelExceptions();        //entry point for support level exce
 
 void uTLB_RefillHandler();
 
-int *getMissingPageNumber();
+int getMissingPageNumber();
 
 static pteEntry_t *getMissingPage();
 

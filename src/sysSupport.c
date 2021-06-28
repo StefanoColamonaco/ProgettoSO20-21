@@ -6,6 +6,7 @@
 #include <umps3/umps/arch.h>
 
 #include "init.h"
+#include "scheduler.h"
 #include "sysSupport.h"
 #include "supportSystemCalls.h"
 
@@ -25,7 +26,7 @@ void uTLB_RefillHandler () {
 	contextSwitch(currentProcess);
 }
 
-int *getMissingPageNumber() {
+int getMissingPageNumber() {
     unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
@@ -35,6 +36,7 @@ int *getMissingPageNumber() {
         }
     }
     SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
+    return 0;
 }
 
 static pteEntry_t *getMissingPage() {
@@ -47,4 +49,5 @@ static pteEntry_t *getMissingPage() {
         }
     }
     SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
+    return 0;
 }
