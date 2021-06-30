@@ -27,7 +27,7 @@ void uTLB_RefillHandler () {
 }
 
 int getMissingPageNumber() {
-    unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
+    unsigned int badVAddr = getBADVADDR(); //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
         if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
@@ -40,7 +40,7 @@ int getMissingPageNumber() {
 }
 
 static pteEntry_t *getMissingPage() {
-    unsigned int badVAddr = ((state_t *)BIOSDATAPAGE)->gpr[CP0_BadVAddr]; //TODO check if that´s the correct status
+    unsigned int badVAddr = getBADVADDR(); //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
         if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
