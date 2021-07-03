@@ -134,16 +134,16 @@ void handlePageFault() {
 
 
 static void handleTLBInvalid(support_t *supp) {
-    int* missingPageNumber = getMissingPageNumber();
+    int missingPageNumber = getMissingPageNumber();
     int frameIndexToReplace = getFrameIndexToReplace();
-    pteEntry_t *missingPage = &supp->sup_privatePgTbl[*missingPageNumber];
-    swap_t *frameToReplace = &swapTable[frameIndexToReplace];
+    pteEntry_t *missingPage = &(supp->sup_privatePgTbl[missingPageNumber]);
+    swap_t *frameToReplace = &(swapTable[frameIndexToReplace]);
 
     if(frameIsOccupied(frameToReplace)) {
         markInvalidAndSave(frameToReplace, frameIndexToReplace);
     }
 
-    writeFromDevToPool(supp, *missingPageNumber, frameIndexToReplace);
+    writeFromDevToPool(supp, missingPageNumber, frameIndexToReplace);
     updateSwapTableEntry(frameToReplace, supp->sup_asid, missingPage);
     
     markValidAndUpdateTLB(missingPage, frameIndexToReplace);
@@ -153,7 +153,7 @@ static void handleTLBInvalid(support_t *supp) {
 
 static void markInvalidAndSave(swap_t *frameToReplace, int frameIndexToReplace) {
     unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus | DISABLEINTS);
+    setSTATUS(oldStatus & DISABLEINTS);
     markPTEntryNotValid(frameToReplace->sw_pte);
     markTLBEntryNotValid(frameToReplace->sw_pte);
     setSTATUS(oldStatus);
@@ -163,7 +163,7 @@ static void markInvalidAndSave(swap_t *frameToReplace, int frameIndexToReplace) 
 
 static void markValidAndUpdateTLB(pteEntry_t *page, int frameIndex) {
     unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus | DISABLEINTS);     //TODO possibly wrong. check correct mask
+    setSTATUS(oldStatus & DISABLEINTS);     //TODO possibly wrong. check correct mask
     markEntryPresentAtIndex(page, frameIndex);
     updateEntryInTLB(page);
     setSTATUS(oldStatus);
@@ -183,7 +183,7 @@ static int getFrameIndexToReplace() {
 
 
 static inline int frameIsOccupied(swap_t* frame) {
-    return (frame->sw_asid != -1);
+    return frame->sw_asid != -1;
 }
 
 
@@ -216,15 +216,15 @@ static void writeFromPoolToDev(swap_t* frame, int frameIndex) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
-    dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);   //this entry is marked invalid but the pfn is still correct due to mutex
+    dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);   //this entry was recently marked invalid but the pfn is still correct due to mutex
     //dev->dtp.data0 = frameAddrInPool(frameIndex);
     dev->dtp.command = blockNum << 8 | WRITEBLK;
-    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, 0)], 0 ,0);
+    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, FALSE)], 0 ,0);
 }
 
 
 static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameIndex) {
-    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];                             //unused missingPage 
+    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];              //unused missingPage 
     int devNo = supp->sup_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = missingPageNum;
@@ -280,8 +280,7 @@ int PTEentryIsValid(pteEntry_t *entry) {
 
 void markReadOnlyPages(support_t *supp) {
     unsigned int *text_mem_start = (unsigned int *)0x0008;    
-    unsigned int *text_mem_size = (unsigned int *)0x000C
-;
+    unsigned int *text_mem_size = (unsigned int *)0x000C;
 
     for (int i = 0; i < MAXPAGES; i++){
         pteEntry_t *page = &supp->sup_privatePgTbl[i];
