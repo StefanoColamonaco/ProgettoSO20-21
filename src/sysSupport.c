@@ -10,8 +10,6 @@
 #include "sysSupport.h"
 #include "supportSystemCalls.h"
 
-static pteEntry_t *getMissingPage();
-
 /* function that handle support level exceptions */
 void handleSupportLevelExceptions(){    
                                                 //sono necessarie inizializzazioni ?                    
@@ -39,15 +37,29 @@ int getMissingPageNumber() {
     return 0;
 }
 
-static pteEntry_t *getMissingPage() {
-    unsigned int badVAddr = getBADVADDR(); //TODO check if that´s the correct status
+
+
+
+//TODO remove testing variables 
+void blank() {
+    ;
+}
+static unsigned int badVAddr; // global to allow debugging
+static unsigned int currAddr;
+
+pteEntry_t *getMissingPage() {
+    badVAddr = getBADVADDR(); //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
+    
+    
     for (int i = 0; i < MAXPAGES; i++) {
+        currAddr = ENTRYHI_GET_VPN(pageTable[i].pte_entryHI);
         if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+           //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
             return &pageTable[i];
         }
     }
+    blank();
     SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
     return 0;
 }
