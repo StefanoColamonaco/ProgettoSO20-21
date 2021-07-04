@@ -126,6 +126,7 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
         if ( ((*bitmap >> i) & 1U) == ON )
             return i;
     }
+    return -1;
 }
 
 /*V operation on the semaphore associated to the device number */

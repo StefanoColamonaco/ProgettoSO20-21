@@ -79,6 +79,7 @@ static void init_uproc_support(int asid) {
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackGen[499]);
+	init_uproc_pagetable(&uproc_supp[asid]);
 }
 
 

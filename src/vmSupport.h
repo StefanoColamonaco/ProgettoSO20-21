@@ -4,6 +4,11 @@
 extern unsigned int freeAsidBitmap;
 extern unsigned int swapFloor;
 
+
+int getVPNAddress(int index);
+
+void init_uproc_pagetable(support_t * supp);
+
 int getFreeAsid();
 
 void initUprocPageTable(pcb_t *uproc);

@@ -29,7 +29,7 @@ unsigned int freeAsidBitmap = 0b11111111;
 static int frameIndexToReplace = 0;
 
 
-static int getVPNAddress(int index);
+int getVPNAddress(int index);
 
 //static void initSwapSem();
 
@@ -114,6 +114,18 @@ int getVPNAddress(int index) {
         return 0xBFFFF; 
     }
     return 0x80000 + index;
+}
+
+
+static unsigned int vpn;
+
+void init_uproc_pagetable(support_t * supp) {
+    pteEntry_t *page_table = supp->sup_privatePgTbl;
+    for (int i = 0; i < MAXPAGES; i++) {
+        vpn = getVPNAddress(i);
+        page_table[i].pte_entryHI = vpn << VPNSHIFT | supp->sup_asid << ASIDSHIFT;
+        page_table[i].pte_entryLO = DIRTYON;
+    }
 }
 
 
