@@ -91,7 +91,7 @@ void initSwapStructs() {
 
 static void initSwapTable() {
     for (int i = 0; i < POOLSIZE; i++) {
-        swapTable->sw_asid = -1;
+        swapTable[i].sw_asid = -1;
     }
 }
 
@@ -240,7 +240,7 @@ static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameInd
     //dev->dtp.data0 = ENTRYLO_GET_PFN(missingPage->pte_entryLO);
     dev->dtp.data0 = frameAddrInPool(frameIndex);
     dev->dtp.command = blockNum << 8 | READBLK;
-    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, 0)], 0 ,0);
+    SYSCALL(IOWAIT, IL_FLASH, devNo ,0);
 }
 
 

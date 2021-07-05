@@ -172,6 +172,7 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
     
     case DISKINT:
     case FLASHINT:
+        return (interruptLine - DISKINT)*8 + deviceNo;
     case NETWINT:
     case PRNTINT:
         return (interruptLine - DISKINT)*8 + deviceNo;
