@@ -7,7 +7,7 @@ extern unsigned int swapFloor;
 
 int getVPNAddress(int index);
 
-void init_uproc_pagetable(support_t * supp, int asid);
+void init_uproc_pagetable(support_t * supp);
 
 int getFreeAsid();
 

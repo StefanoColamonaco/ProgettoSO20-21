@@ -43,11 +43,9 @@ static void markPTEntryNotValid(pteEntry_t* entry);
 
 static void markTLBEntryNotValid(pteEntry_t* entry);
 
-static void writeFromPoolToDev(swap_t* frame, int frameIndex);
+static void writeFromPoolToDev(swap_t* frame);
 
-static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameIndex);
-
-static void updateSwapTableEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd);
+static void writeFromDevToPool(pteEntry_t *page);
 
 static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex);
 
@@ -57,9 +55,11 @@ static void updateEntryInTLB(pteEntry_t* entry);
 
 static void handleTLBInvalid();
 
-static void markInvalidAndSave(swap_t* frameToReplace, int frameIndexToReplace);
+static void markInvalidAndSave(swap_t* frameToReplace);
 
 int PTEentryIsValid(pteEntry_t *entry);
+
+static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
 
 
 void initUprocPageTable(pcb_t *uproc) {
@@ -116,11 +116,11 @@ int getVPNAddress(int index) {
     return 0x80000 + index;
 }
 
-void init_uproc_pagetable(support_t * supp, int asid) {
+void init_uproc_pagetable(support_t * supp) {
     pteEntry_t *page_table = supp->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
         unsigned int vpn = getVPNAddress(i);
-        page_table[i].pte_entryHI = (vpn << VPNSHIFT) | (asid << ASIDSHIFT);
+        page_table[i].pte_entryHI = (vpn << VPNSHIFT) | (supp->sup_asid << ASIDSHIFT);
         page_table[i].pte_entryLO = DIRTYON | GLOBALON;
     }
 }
@@ -143,37 +143,36 @@ void handlePageFault() {
 
 
 static void handleTLBInvalid(support_t *supp) {
-    int missingPageNumber = getMissingPageNumber();
+    pteEntry_t *missingPage = getMissingPage();  //TODO the page is already in the tlb. We need to grab it from there
     int frameIndexToReplace = getFrameIndexToReplace();
-    pteEntry_t *missingPage = &(supp->sup_privatePgTbl[missingPageNumber]);
-    swap_t *frameToReplace = &(swapTable[frameIndexToReplace]);
+    swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
     if(frameIsOccupied(frameToReplace)) {
-        markInvalidAndSave(frameToReplace, frameIndexToReplace);
+        markInvalidAndSave(frameToReplace);
     }
 
-    writeFromDevToPool(supp, missingPageNumber, frameIndexToReplace);
-    updateSwapTableEntry(frameToReplace, supp->sup_asid, missingPage);
+    writeFromDevToPool(missingPage);
+    updateSwapTableEntry(frameToReplace, missingPage);
     
     markValidAndUpdateTLB(missingPage, frameIndexToReplace);
 }
 
 
 
-static void markInvalidAndSave(swap_t *frameToReplace, int frameIndexToReplace) {
+static void markInvalidAndSave(swap_t *frameToReplace) {
     unsigned int oldStatus = getSTATUS();
     setSTATUS(oldStatus & DISABLEINTS);
     markPTEntryNotValid(frameToReplace->sw_pte);
     markTLBEntryNotValid(frameToReplace->sw_pte);
     setSTATUS(oldStatus);
-    writeFromPoolToDev(frameToReplace, frameIndexToReplace);
+    writeFromPoolToDev(frameToReplace);
 }
 
 
-static void markValidAndUpdateTLB(pteEntry_t *page, int frameIndex) {
+static void markValidAndUpdateTLB(pteEntry_t *page, int newIndex) {
     unsigned int oldStatus = getSTATUS();
     setSTATUS(oldStatus & DISABLEINTS);     //TODO possibly wrong. check correct mask
-    markEntryPresentAtIndex(page, frameIndex);
+    markEntryPresentAtIndex(page, newIndex);
     updateEntryInTLB(page);
     setSTATUS(oldStatus);
 }
@@ -221,39 +220,36 @@ static inline int frameAddrInPool(int frameIndex) {
 }
 
 
-static void writeFromPoolToDev(swap_t* frame, int frameIndex) {
+static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
-    dev->dtp.data0 = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);   //this entry was recently marked invalid but the pfn is still correct due to mutex
-    //dev->dtp.data0 = frameAddrInPool(frameIndex);
+    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
     SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, FALSE)], 0 ,0);
 }
 
 
-static void writeFromDevToPool(support_t* supp, int missingPageNum, int frameIndex) {
-    pteEntry_t *missingPage = &supp->sup_privatePgTbl[missingPageNum];              //unused missingPage 
-    int devNo = supp->sup_asid - 1;
+static void writeFromDevToPool(pteEntry_t *page) {           
+    int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
-    int blockNum = missingPageNum;
-    //dev->dtp.data0 = ENTRYLO_GET_PFN(missingPage->pte_entryLO);
-    dev->dtp.data0 = frameAddrInPool(frameIndex);
+    int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
+    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(page->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
-    SYSCALL(IOWAIT, IL_FLASH, devNo ,0);
+    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, FALSE)], 0 ,0);
 }
 
 
-static void updateSwapTableEntry(swap_t *poolFrame, int asid, pteEntry_t* pageToAdd) {
-    poolFrame->sw_asid = asid;
-    poolFrame->sw_pte = pageToAdd;
-    poolFrame->sw_pageNo = (pageToAdd->pte_entryHI & GETPAGENO) >> 12;
+static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
+    swapEntry->sw_asid = ENTRYHI_GET_ASID(pageToAdd->pte_entryHI);
+    swapEntry->sw_pte = pageToAdd;
+    swapEntry->sw_pageNo = ENTRYHI_GET_VPN(pageToAdd->pte_entryHI);
 }
 
 
-static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex) {
-    missingPage->pte_entryLO |= VALIDON;        //TODO check
-    missingPage->pte_entryLO &= ~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT;
+static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
+    page->pte_entryLO |= VALIDON;        //TODO check
+    page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
 }
 
 
