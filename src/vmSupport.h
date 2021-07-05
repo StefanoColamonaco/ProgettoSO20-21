@@ -7,7 +7,7 @@ extern unsigned int swapFloor;
 
 int getVPNAddress(int index);
 
-void init_uproc_pagetable(support_t * supp);
+void init_uproc_pagetable(support_t * supp, int asid);
 
 int getFreeAsid();
 
@@ -18,6 +18,8 @@ void initSwapStructs();
 void removePagesFromTLB(int asid);
 
 void markReadOnlyPages(support_t *supp);
+
+void handlePageFault();
 
 void setSwapFloor();
 

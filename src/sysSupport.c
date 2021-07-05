@@ -28,8 +28,7 @@ int getMissingPageNumber() {
     unsigned int badVAddr = getBADVADDR(); //TODO check if that´s the correct status
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {
             return i;
         }
     }
@@ -37,29 +36,14 @@ int getMissingPageNumber() {
     return 0;
 }
 
-
-
-
-//TODO remove testing variables 
-void blank() {
-    ;
-}
-static unsigned int badVAddr; // global to allow debugging
-static unsigned int currAddr;
-
 pteEntry_t *getMissingPage() {
-    badVAddr = getBADVADDR(); //TODO check if that´s the correct status
+    unsigned int badVAddr = getBADVADDR();
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    
-    
     for (int i = 0; i < MAXPAGES; i++) {
-        currAddr = ENTRYHI_GET_VPN(pageTable[i].pte_entryHI);
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-           //return ENTRYLO_GET_PFN(pageTable[i].pte_entryLO);
+        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {
             return &pageTable[i];
         }
     }
-    blank();
-    SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
+    SYSCALL(TERMPROCESS, 0, 0, 0);
     return 0;
 }

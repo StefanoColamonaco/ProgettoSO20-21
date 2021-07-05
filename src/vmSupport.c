@@ -116,15 +116,12 @@ int getVPNAddress(int index) {
     return 0x80000 + index;
 }
 
-
-static unsigned int vpn;
-
-void init_uproc_pagetable(support_t * supp) {
+void init_uproc_pagetable(support_t * supp, int asid) {
     pteEntry_t *page_table = supp->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
-        vpn = getVPNAddress(i);
-        page_table[i].pte_entryHI = vpn << VPNSHIFT | supp->sup_asid << ASIDSHIFT;
-        page_table[i].pte_entryLO = DIRTYON;
+        unsigned int vpn = getVPNAddress(i);
+        page_table[i].pte_entryHI = (vpn << VPNSHIFT) | (asid << ASIDSHIFT);
+        page_table[i].pte_entryLO = DIRTYON | GLOBALON;
     }
 }
 
