@@ -62,31 +62,10 @@ int PTEentryIsValid(pteEntry_t *entry);
 static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
 
 
-void initUprocPageTable(pcb_t *uproc) {
-    int asid = uproc->p_supportStruct->sup_asid;
-    int vpn;
-    for (int i = 0; i < USERPGTBLSIZE; i++) {
-        vpn = getVPNAddress(i);
-        unsigned int entryHI = (vpn << VPNSHIFT) + (asid << ASIDSHIFT);
-        unsigned int entryLO = DIRTYON;
-        uproc->p_supportStruct->sup_privatePgTbl[i].pte_entryHI = entryHI;
-        uproc->p_supportStruct->sup_privatePgTbl[i].pte_entryLO = entryLO;
-    }
-}
-
-
 void initSwapStructs() {
     initSwapTable();
     swapSem = 1;
 }
-
-
-// static void initSwapSem() {
-//     swapSem = 1;
-//     swapSemStruct.s_semAdd = &swapSem;
-//     swapSemStruct.s_procQ = mkEmptyProcQ();
-//     swapSemStruct.s_next = NULL;
-// }
 
 
 static void initSwapTable() {
@@ -116,9 +95,10 @@ int getVPNAddress(int index) {
     return 0x80000 + index;
 }
 
+
 void init_uproc_pagetable(support_t * supp) {
     pteEntry_t *page_table = supp->sup_privatePgTbl;
-    for (int i = 0; i < MAXPAGES; i++) {
+    for (int i = 0; i < USERPGTBLSIZE; i++) {
         unsigned int vpn = getVPNAddress(i);
         page_table[i].pte_entryHI = (vpn << VPNSHIFT) | (supp->sup_asid << ASIDSHIFT);
         page_table[i].pte_entryLO = DIRTYON | GLOBALON;
@@ -140,7 +120,7 @@ void handlePageFault() {
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
         blank();
-        LDST(&supp->sup_exceptState[1]);   
+        LDST(supp->sup_exceptState);   
     }
 }
 
@@ -247,7 +227,7 @@ static void writeFromDevToPool(pteEntry_t *page) {
     int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
     pfn = frameIndexToReplace;
     frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
-    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(page->pte_entryLO) * PAGESIZE;
+    dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo ,0);
 }
