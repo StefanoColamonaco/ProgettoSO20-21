@@ -37,7 +37,7 @@ static void initSwapTable();
 
 static inline int frameIsOccupied(swap_t* frame);
 
-static int getFrameIndexToReplace();
+static void updateFrameIndexToReplace();
 
 static void markPTEntryNotValid(pteEntry_t* entry);
 
@@ -49,7 +49,7 @@ static void writeFromDevToPool(pteEntry_t *page);
 
 static void markEntryPresentAtIndex(pteEntry_t *missingPage, int newIndex);
 
-static void markValidAndUpdateTLB(pteEntry_t *page, int frameIndex);
+static void markValidAndUpdateTLB(pteEntry_t *page);
 
 static void updateEntryInTLB(pteEntry_t* entry);
 
@@ -125,7 +125,9 @@ void init_uproc_pagetable(support_t * supp) {
     }
 }
 
-
+void blank () {
+    ;
+}
 
 /*pager*/
 void handlePageFault() {
@@ -137,14 +139,17 @@ void handlePageFault() {
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
-        contextSwitch(currentProcess);   
+        blank();
+        LDST(&supp->sup_exceptState[1]);   
     }
 }
 
+static pteEntry_t *page_fault_debug;
 
 static void handleTLBInvalid(support_t *supp) {
     pteEntry_t *missingPage = getMissingPage();  //TODO the page is already in the tlb. We need to grab it from there
-    int frameIndexToReplace = getFrameIndexToReplace();
+    page_fault_debug = missingPage;
+    updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
     if(frameIsOccupied(frameToReplace)) {
@@ -154,7 +159,7 @@ static void handleTLBInvalid(support_t *supp) {
     writeFromDevToPool(missingPage);
     updateSwapTableEntry(frameToReplace, missingPage);
     
-    markValidAndUpdateTLB(missingPage, frameIndexToReplace);
+    markValidAndUpdateTLB(missingPage);
 }
 
 
@@ -169,24 +174,24 @@ static void markInvalidAndSave(swap_t *frameToReplace) {
 }
 
 
-static void markValidAndUpdateTLB(pteEntry_t *page, int newIndex) {
+static void markValidAndUpdateTLB(pteEntry_t *page) {
     unsigned int oldStatus = getSTATUS();
     setSTATUS(oldStatus & DISABLEINTS);     //TODO possibly wrong. check correct mask
-    markEntryPresentAtIndex(page, newIndex);
+    markEntryPresentAtIndex(page, frameIndexToReplace);
     updateEntryInTLB(page);
     setSTATUS(oldStatus);
 }
 
 
 
-static int getFrameIndexToReplace() {
+static void updateFrameIndexToReplace() {
     for (int i = 0; i < POOLSIZE; i++) {
-        if (swapTable[i].sw_asid == -1)
-            return i;
+        if (swapTable[i].sw_asid == -1) {
+            frameIndexToReplace = i;
+            return;
+        }
     }
-    int result = frameIndexToReplace;
     frameIndexToReplace = (frameIndexToReplace + 1)%POOLSIZE;
-    return result;
 }
 
 
@@ -219,24 +224,32 @@ static inline int frameAddrInPool(int frameIndex) {
     return swapFloor + frameIndex * 4096;
 }
 
+static unsigned int frameAddr;
+static unsigned int pfn;
 
 static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
+    pfn = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
+    frameAddr = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
-    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, FALSE)], 0 ,0);
+    SYSCALL(IOWAIT, FLASHINT, devNo ,0);
 }
+
+
 
 
 static void writeFromDevToPool(pteEntry_t *page) {           
     int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
+    pfn = frameIndexToReplace;
+    frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(page->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
-    SYSCALL(IOWAIT, deviceSemaphores[getSemIndex(IL_FLASH, devNo, FALSE)], 0 ,0);
+    SYSCALL(IOWAIT, FLASHINT, devNo ,0);
 }
 
 
