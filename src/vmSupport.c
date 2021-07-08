@@ -120,7 +120,6 @@ void handlePageFault() {
     }
 }
 
-
 static void handleTLBInvalid(support_t *supp) {
     pteEntry_t *missingPage = getMissingPage();  //TODO the page is already in the tlb. We need to grab it from there
     updateFrameIndexToReplace();
@@ -151,7 +150,7 @@ static void markInvalidAndSave(swap_t *frameToReplace) {
 static void markValidAndUpdateTLB(pteEntry_t *page) {
     unsigned int oldStatus = getSTATUS();
     setSTATUS(oldStatus & DISABLEINTS);     //TODO possibly wrong. check correct mask
-    markEntryPresentAtIndex(page, frameIndexToReplace);
+    markEntryPresentAtIndex(page, frameIndexToReplace);      //TODO: Verify
     updateEntryInTLB(page);
     setSTATUS(oldStatus);
 }
@@ -212,14 +211,11 @@ static void writeFromPoolToDev(swap_t* frame) {
 }
 
 
-
-
 static void writeFromDevToPool(pteEntry_t *page) {           
     int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
     pfn = frameIndexToReplace;
-    frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo ,0);
@@ -234,8 +230,9 @@ static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
 
 
 static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
-    page->pte_entryLO |= VALIDON;        //TODO check
-    page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
+    frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
+    page->pte_entryLO = frameAddr | VALIDON | DIRTYON;        //TODO check
+    //page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
 }
 
 
