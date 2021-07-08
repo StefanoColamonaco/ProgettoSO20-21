@@ -101,13 +101,10 @@ void init_uproc_pagetable(support_t * supp) {
     for (int i = 0; i < USERPGTBLSIZE; i++) {
         unsigned int vpn = getVPNAddress(i);
         page_table[i].pte_entryHI = (vpn << VPNSHIFT) | (supp->sup_asid << ASIDSHIFT);
-        page_table[i].pte_entryLO = DIRTYON | GLOBALON;
+        page_table[i].pte_entryLO = DIRTYON;
     }
 }
 
-void blank () {
-    ;
-}
 
 /*pager*/
 void handlePageFault() {
@@ -119,16 +116,13 @@ void handlePageFault() {
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
-        blank();
         LDST(supp->sup_exceptState);   
     }
 }
 
-static pteEntry_t *page_fault_debug;
 
 static void handleTLBInvalid(support_t *supp) {
     pteEntry_t *missingPage = getMissingPage();  //TODO the page is already in the tlb. We need to grab it from there
-    page_fault_debug = missingPage;
     updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
@@ -176,11 +170,11 @@ static void updateFrameIndexToReplace() {
 
 
 static inline int frameIsOccupied(swap_t* frame) {
-    return frame->sw_asid != -1;
+    return frame->sw_asid >= 1 && frame->sw_asid <= 8;
 }
 
 
-static inline void markPTEntryNotValid(pteEntry_t* entry) {
+static void markPTEntryNotValid(pteEntry_t* entry) {
     entry->pte_entryLO &= ~VALIDON;
 }
 
@@ -189,8 +183,7 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
     setENTRYHI(entry->pte_entryHI);
     TLBP();
     unsigned int indexReg = getINDEX();
-    if (indexReg >> 31 == OFF) {  //check p bit for valid index
-        //unsigned int index = (indexReg & 0xff00) >> 8;
+    if (indexReg >> 31 == OFF) {  //check p bit for valid index 
         TLBR();
         unsigned int entryLO = getENTRYLO();
         entryLO &= ~VALIDON;
@@ -215,7 +208,7 @@ static void writeFromPoolToDev(swap_t* frame) {
     frameAddr = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
-    SYSCALL(IOWAIT, FLASHINT, devNo ,0);
+    SYSCALL(IOWAIT, FLASHINT, devNo, 0);
 }
 
 
