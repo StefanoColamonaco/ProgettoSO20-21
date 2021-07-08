@@ -16,27 +16,26 @@ void handleSupportLevelExceptions(){
     handleSupportSystemcalls();
 }
 
+static pteEntry_t * tlb_page_debug;
+static unsigned int entryHi_debug;
+static unsigned int entryLo_debug;
+
+
 void uTLB_RefillHandler () {
 	pteEntry_t *pageToWrite = getMissingPage();
+    tlb_page_debug = pageToWrite;
 	setENTRYHI(pageToWrite->pte_entryHI);
 	setENTRYLO(pageToWrite->pte_entryLO);
+    entryHi_debug = pageToWrite->pte_entryHI;
+    entryLo_debug = pageToWrite->pte_entryLO;
 	TLBWR();    //TODO replace with TLBWI() after a replacing algorithm is implemented	
 	contextSwitch(currentProcess);
 }
 
-int getMissingPageNumber() {
-    unsigned int badVAddr = getBADVADDR(); //TODO check if that´s the correct status
-    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    for (int i = 0; i < MAXPAGES; i++) {
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {
-            return i;
-        }
-    }
-    SYSCALL(TERMPROCESS, 0, 0, 0); //no page matching
-    return 0;
-}
 
-pteEntry_t *getMissingPage() {
+
+
+pteEntry_t *getMissingPage() {      //TODO add GETSUPP so we can use this in level 3
     unsigned int badVAddr = getBADVADDR();
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
@@ -45,5 +44,5 @@ pteEntry_t *getMissingPage() {
         }
     }
     SYSCALL(TERMPROCESS, 0, 0, 0);
-    return 0;
+    return -1;
 }
