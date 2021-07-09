@@ -14,3 +14,12 @@ void copyState(state_t *src, state_t *dest){
     dest -> status = src -> status;
     dest -> hi = src -> hi;
 }
+
+void * memcpy (void *dest, const void *src, size_t len)
+{
+  char *d = dest;
+  const char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
+}

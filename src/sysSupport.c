@@ -5,6 +5,7 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
+#include "stateUtil.h"
 #include "init.h"
 #include "scheduler.h"
 #include "sysSupport.h"
@@ -15,15 +16,17 @@ void stop2(){
 }
 
 /* function that handle support level exceptions */
-void handleSupportLevelExceptions(){  
+void handleSupportLevelExceptions(){
+    state_t systemState = *((state_t*) BIOSDATAPAGE);
     support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[0].cause;
-    stop2(); 
+ 
     if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
         programTrapHandler(supp);
     } else {                 
-        handleSupportSystemcalls();
+        stop2();
+        handleSupportSystemcalls(&systemState);
     }
 }
 
