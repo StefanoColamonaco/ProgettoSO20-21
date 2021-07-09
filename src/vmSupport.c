@@ -115,7 +115,9 @@ void handlePageFault() {
     } else {                    //page fault on load or store. at this point the TLB has already been refilled
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
-        SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
+        SYSCALL(VERHOGEN, (int)&swapSem, 0, 0); 
+        
+        supp->sup_exceptState[0].pc_epc +=4;   
         LDST(&(supp->sup_exceptState[0]));   
     }
 }

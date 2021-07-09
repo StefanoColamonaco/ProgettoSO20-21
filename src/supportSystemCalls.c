@@ -18,9 +18,11 @@ void stop2()
 }
 
 state_t *state;
+state_t *newState;
 
-void handleSupportSystemcalls(state_t *systemState)
+void handleSupportSystemcalls(state_t *systemState, support_t *support)
 {
+	newState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
 	int currentSyscall = systemState->reg_a0;
 	state = systemState;
 
@@ -108,8 +110,10 @@ void write_To_Printer()
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
 	//se c' è errore sovrascrivo retvalue con - il valore dello status
-	state->reg_v0 = retValue;
-	LDST(state);
+	newState->reg_v0 = retValue;
+	newState -> pc_epc +=4;
+	stop2();
+	LDST(newState);
 
 	//note:
 	//dobbiamo avere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
@@ -152,8 +156,10 @@ void write_To_Terminal()
 		}
 	}
 	SYSCALL(VERHOGEN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
-	state->reg_v0 = retValue;
-	LDST(state);
+	newState->reg_v0 = retValue;
+	newState -> pc_epc +=4;
+	stop2();
+	LDST(newState);
 }
 
 void read_From_Terminal()
@@ -169,14 +175,16 @@ void read_From_Terminal()
 	int terminalAddress = DEV_REG_ADDR(TERMINT, asid - 1);
 	;
 	unsigned int *base = (unsigned int *)(terminalAddress);
-	unsigned int status;
+	unsigned int status = 1;
 	int retValue = 0;
+	char received_char = '0';
 
 	SYSCALL(PASSEREN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	while (*virtAddr != EOS /*verificare se servono altri controlli di fine stringa es \n \r etc*/)
+	while (received_char != EOS  && ((status == READY) || (status == 5) )/*verificare se servono altri controlli di fine stringa es \n \r etc*/)
 	{
 		*(base + RECVCOMMAND) = RECVCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
+		//received_char = base ->term.recv_status >> 8;
 		if ((status & TERMSTATMASK) != RECVD)
 		{
 			retValue = status * -1; //da controllare manuale umps
@@ -190,8 +198,10 @@ void read_From_Terminal()
 		}
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	state->reg_v0 = retValue;
-	LDST(state);
+	newState->reg_v0 = retValue;
+	newState -> pc_epc +=4;
+	stop2();
+	LDST(newState);
 	//note:
 	//come sys12 ma legge da terminale invece di scrivere
 	//mentre l'input viene letto il processo deve essere sospeso

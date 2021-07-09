@@ -14,14 +14,14 @@
 /* function that handle support level exceptions */
 void handleSupportLevelExceptions(){
     state_t systemState = *((state_t*) BIOSDATAPAGE);
-    support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+    support_t* supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[0].cause;
  
     if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
         programTrapHandler(supp);
     } else {                 
-        handleSupportSystemcalls(&systemState);
+        handleSupportSystemcalls(&systemState, supp);
     }
 }
 
