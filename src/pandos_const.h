@@ -175,5 +175,6 @@
 
 #define TLBSIZE 16
 #define INDEXSHIFT 8
+#define LASTPAGEMASK 0x3FFFF
 
 #endif

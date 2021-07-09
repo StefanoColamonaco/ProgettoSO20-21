@@ -32,7 +32,8 @@ static void init_uproc_state(int asid);
 
 static void init_uproc_support(int asid);
 
-
+// ATTENZIONE, VARIABILE DA SOSTITUIRE CON UPROCMAX IN TUTTO IL FILE:
+int procNum = 1;
 
 void test_phase_3() {
 	initSwapStructs();
@@ -54,7 +55,7 @@ static void initDevSemaphores() {
 
 
 void initUProcs() {
-	for (int i = 0; i < UPROCMAX; i++) {
+	for (int i = 0; i < procNum; i++) {
 		int asid = i+1;//getFreeAsid();
 		init_uproc_state(asid);
 		init_uproc_support(asid);
@@ -74,7 +75,7 @@ static void init_uproc_state(int asid) {
 static void init_uproc_support(int asid) {
 	uproc_supp[asid].sup_asid = asid;
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)handlePageFault; 
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleExceptions; 
+	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleSupportLevelExceptions; 
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].status = TEBITON | IECON; //local timer and interrupts enabled, kernel mode by default
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
@@ -84,14 +85,14 @@ static void init_uproc_support(int asid) {
 
 
 static void startUProcs() {
-	for (int i = 1; i < UPROCMAX+1; i++) {
+	for (int i = 1; i < procNum+1; i++) {
 		SYSCALL(1, (unsigned int) &uproc_state[i], (unsigned int) &uproc_supp[i], 0);
 	}
 }
 
 
 static void waitForUprocs() {
-	for (int i = 0; i < UPROCMAX; i++)
+	for (int i = 0; i < procNum; i++)
 	{
 		SYSCALL(PASSEREN, (unsigned int) &masterSem, 0, 0);
 	}

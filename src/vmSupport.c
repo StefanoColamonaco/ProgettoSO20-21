@@ -108,11 +108,10 @@ void init_uproc_pagetable(support_t * supp) {
 
 /*pager*/
 void handlePageFault() {
-    state_t* state_reg = (state_t *)BIOSDATAPAGE;
     support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[0].cause;
     if (cause == EXC_MOD) {     //trying to write on read-only
-        //treat as program trap
+        programTrapHandler(supp);
     } else {                    //page fault on load or store. at this point the TLB has already been refilled
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
@@ -211,11 +210,19 @@ static void writeFromPoolToDev(swap_t* frame) {
     SYSCALL(IOWAIT, FLASHINT, devNo, 0);
 }
 
+unsigned int atest;
+
+void stop(){
+
+}
 
 static void writeFromDevToPool(pteEntry_t *page) {           
     int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
-    int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
+    unsigned int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
+    if(blockNum == LASTPAGEMASK) blockNum = MAXPAGES-1;
+    atest = blockNum;
+    stop();
     pfn = frameIndexToReplace;
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;

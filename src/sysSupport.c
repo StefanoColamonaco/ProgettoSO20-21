@@ -10,10 +10,21 @@
 #include "sysSupport.h"
 #include "supportSystemCalls.h"
 
+void stop2(){
+
+}
+
 /* function that handle support level exceptions */
-void handleSupportLevelExceptions(){    
-                                                //sono necessarie inizializzazioni ?                    
-    handleSupportSystemcalls();
+void handleSupportLevelExceptions(){  
+    support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+    unsigned int cause = supp->sup_exceptState[0].cause;
+    stop2(); 
+    if (cause == EXC_MOD) {     //trying to write on read-only
+        //treat as program trap
+        programTrapHandler(supp);
+    } else {                 
+        handleSupportSystemcalls();
+    }
 }
 
 unsigned int tlbIndex = 0;
@@ -45,4 +56,15 @@ pteEntry_t *getMissingPage() {      //TODO add GETSUPP so we can use this in lev
     }
     SYSCALL(TERMPROCESS, 0, 0, 0);
     return -1;
+}
+
+void programTrapHandler( support_t *supportStruct){
+
+    //controllare se ci sono mutue esclusioni da rilasciare
+
+    /*if(supportStruct != NULL && supportStruct != 0 && supportStruct->sup_exceptContext != NULL){                                 
+        
+    }*/
+
+    SYSCALL(TERMINATE,0,0,0);
 }

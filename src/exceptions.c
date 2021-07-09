@@ -70,7 +70,7 @@ void passupOrDie(int exceptionType){
         LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].stackPtr,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].status,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].pc);
-        handleSupportLevelExceptions();
+        //handleSupportLevelExceptions();
     }
 
     SYSCALL(TERMPROCESS,0,0,0);

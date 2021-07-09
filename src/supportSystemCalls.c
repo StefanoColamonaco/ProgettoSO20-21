@@ -16,13 +16,18 @@
 
 
 void handleSupportSystemcalls() {
-  state_t *systemState = (state_t *) BIOSDATAPAGE;
-  int currentSyscall = systemState -> reg_a0;  
+  //state_t *systemState = (state_t *) BIOSDATAPAGE;    //non so se si può
+  //int currentSyscall = systemState -> reg_a0;  
   
   //necessario il controllo per la user mode?
 
-  copyState(systemState, &(currentProcess -> p_s));
-  currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;
+  //copyState(systemState, &(currentProcess -> p_s));
+  //currentProcess -> p_s.pc_epc = currentProcess -> p_s.pc_epc + 4;
+
+  //support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+  //supp->sup_exceptContext[1]
+
+  int currentSyscall =11;
 
   switch(currentSyscall){
     /* Support level sys calls */
