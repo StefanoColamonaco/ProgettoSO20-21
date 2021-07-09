@@ -24,9 +24,9 @@ int deviceSemaphores[DEVICE_NUM];   //last device is interval time
 
 
 /* Support level semaphores */
-semd_t printerSemaphores[N_DEV_PER_IL];
-semd_t termWriteSemaphores[N_DEV_PER_IL];
-semd_t termReadSemaphores[N_DEV_PER_IL];
+int printerSemaphores[N_DEV_PER_IL+1];
+int termWriteSemaphores[N_DEV_PER_IL+1];
+int termReadSemaphores[N_DEV_PER_IL+1];
 
 
 

@@ -134,10 +134,9 @@ void write_To_Terminal()
 	int terminalAddress = DEV_REG_ADDR(TERMINT, asid - 1); // controllare se è giusto
 	unsigned int *base = (unsigned int *)(terminalAddress);
 	int status;
-	SYSCALL(PASSEREN, (unsigned int)&(termWriteSemaphores[asid]), 0, 0);
+	SYSCALL(PASSEREN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
 	while (*virtAddr != EOS)
 	{
-						stop2();
 		*(base + TRANCOMMAND) = PRINTCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, FALSE);
 		if ((status & TERMSTATMASK) != RECVD)
@@ -152,7 +151,7 @@ void write_To_Terminal()
 			retValue++;
 		}
 	}
-	SYSCALL(VERHOGEN, (unsigned int)&(termWriteSemaphores[asid]), 0, 0);
+	SYSCALL(VERHOGEN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
 	state->reg_v0 = retValue;
 	LDST(state);
 }

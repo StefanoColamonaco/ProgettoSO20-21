@@ -51,6 +51,11 @@ static void initDevSemaphores() {
     for (int i = 0; i < (DEVICE_NUM); i++){
         deviceSemaphores[i] = 1;
     }
+	for (int i = 1; i < N_DEV_PER_IL+1; i++){
+        printerSemaphores[i] = 1;
+		termWriteSemaphores[i] = 1;
+		termReadSemaphores[i] = 1;
+    }
 }
 
 

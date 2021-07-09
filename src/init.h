@@ -25,9 +25,9 @@ extern int deviceSemaphores[];
 #define clockSemaphore deviceSemaphores[DEVICE_NUM-1]
 
 /* Support level semaphores */
-extern semd_t printerSemaphores[];
-extern semd_t termWriteSemaphores[];
-extern semd_t termReadSemaphores[];
+extern int printerSemaphores[];
+extern int termWriteSemaphores[];
+extern int termReadSemaphores[];
 
 
 /*test function*/
