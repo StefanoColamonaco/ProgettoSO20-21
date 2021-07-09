@@ -11,10 +11,6 @@
 #include "sysSupport.h"
 #include "supportSystemCalls.h"
 
-void stop2(){
-
-}
-
 /* function that handle support level exceptions */
 void handleSupportLevelExceptions(){
     state_t systemState = *((state_t*) BIOSDATAPAGE);
@@ -25,7 +21,6 @@ void handleSupportLevelExceptions(){
         //treat as program trap
         programTrapHandler(supp);
     } else {                 
-        stop2();
         handleSupportSystemcalls(&systemState);
     }
 }
