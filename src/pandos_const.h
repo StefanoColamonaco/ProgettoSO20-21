@@ -173,5 +173,7 @@
 #define POOLSIZE (UPROCMAX * 2)
 /* End of Mikeyg constants */
 
+#define TLBSIZE 16
+#define INDEXSHIFT 8
 
 #endif

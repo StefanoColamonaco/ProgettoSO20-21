@@ -84,7 +84,7 @@ static void init_uproc_support(int asid) {
 
 
 static void startUProcs() {
-	for (int i = 1; i < UPROCMAX; i++) {
+	for (int i = 1; i < UPROCMAX+1; i++) {
 		SYSCALL(1, (unsigned int) &uproc_state[i], (unsigned int) &uproc_supp[i], 0);
 	}
 }

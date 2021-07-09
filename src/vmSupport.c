@@ -108,6 +108,7 @@ void init_uproc_pagetable(support_t * supp) {
 
 /*pager*/
 void handlePageFault() {
+    state_t* state_reg = (state_t *)BIOSDATAPAGE;
     support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[0].cause;
     if (cause == EXC_MOD) {     //trying to write on read-only
@@ -116,7 +117,7 @@ void handlePageFault() {
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0);    
-        LDST(supp->sup_exceptState);   
+        LDST(&(supp->sup_exceptState[0]));   
     }
 }
 

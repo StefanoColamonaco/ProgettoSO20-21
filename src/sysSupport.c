@@ -16,19 +16,19 @@ void handleSupportLevelExceptions(){
     handleSupportSystemcalls();
 }
 
-static pteEntry_t * tlb_page_debug;
-static unsigned int entryHi_debug;
-static unsigned int entryLo_debug;
+unsigned int tlbIndex = 0;
 
+void updateTLBIndex(){
+    tlbIndex = (tlbIndex + 1) % TLBSIZE;
+}
 
 void uTLB_RefillHandler () {
 	pteEntry_t *pageToWrite = getMissingPage();
-    tlb_page_debug = pageToWrite;
 	setENTRYHI(pageToWrite->pte_entryHI);
 	setENTRYLO(pageToWrite->pte_entryLO);
-    entryHi_debug = pageToWrite->pte_entryHI;
-    entryLo_debug = pageToWrite->pte_entryLO;
-	TLBWR();    //TODO replace with TLBWI() after a replacing algorithm is implemented	
+    setINDEX(tlbIndex << INDEXSHIFT);
+	TLBWI();    //TODO replace with TLBWI() after a replacing algorithm is implemented
+    updateTLBIndex();	
 	contextSwitch(currentProcess);
 }
 
