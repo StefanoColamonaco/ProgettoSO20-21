@@ -13,18 +13,16 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/const.h>
 
-void stop2()
-{
-}
-
 state_t *state;
 state_t *newState;
+support_t *supp;
 
 void handleSupportSystemcalls(state_t *systemState, support_t *support)
 {
 	newState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
 	int currentSyscall = systemState->reg_a0;
 	state = systemState;
+	supp = support;
 
 	switch (currentSyscall)
 	{
@@ -76,6 +74,7 @@ void get_TOD()
 /* system call that manages the printing of an entire string passed as argument*/
 void write_To_Printer()
 {
+
 	char *virtAddr = (char *)(state->reg_a1);
 	int strlen = state->reg_a2;
 	int retValue = 0;
@@ -84,23 +83,24 @@ void write_To_Printer()
 	{
 		SYSCALL(TERMINATE, 0, 0, 0);
 	}
-	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
+
 	int asid = supp->sup_asid;
-	int printerAddress = DEV_REG_ADDR(PRINTINTERRUPT, asid - 1);
-	;
-	unsigned int *base = (unsigned int *)(printerAddress);
+	devreg_t* base = (devreg_t*)DEV_REG_ADDR(PRNTINT, asid - 1);
+	dtpreg_t* dtp = &(base->dtp);
+
 	unsigned int status;
 
-	SYSCALL(PASSEREN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
+	SYSCALL(PASSEREN, (unsigned int)&(printerSemaphores[asid]), 0, 0);
 	while (*virtAddr != EOS)
 	{
-		*base = PRINTCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
-		status = SYSCALL(IOWAIT, PRINTINTERRUPT, asid - 1, 0);
-		if ((status & PRINTSTATMASK) != PRINTDEVREADY)
+		dtp->data0 = *virtAddr;
+		dtp->command = PRINTCHR;
+		status = SYSCALL(IOWAIT, PRNTINT, asid - 1, 0);
+
+		if (((status & PRINTSTATMASK) != PRINTDEVREADY) && ((status & PRINTSTATMASK) != PRINTDEVREADY))
 		{
 			retValue = status * -1; //da controllare manuale umps
 			*virtAddr = EOS;
-			//PANIC();
 		}
 		else
 		{
@@ -108,17 +108,11 @@ void write_To_Printer()
 			retValue++;
 		}
 	}
-	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	//se c' è errore sovrascrivo retvalue con - il valore dello status
+	SYSCALL(VERHOGEN, (unsigned int)&(printerSemaphores[asid]), 0, 0);
+
 	newState->reg_v0 = retValue;
 	newState -> pc_epc +=4;
 	LDST(newState);
-
-	//note:
-	//dobbiamo avere la mutua esclusione sul dispositivo (stampante) controllano l'asid del processo corrente
-	//funzionamento analogo a print: caricamento di un carattere, attesa attraverso la sys5, lettura dello stato e carattere successivo
-	//se l'indirizzo della stringa da stampare è fuori dalla memoria virtuale del processo o la lunghezza della stringa è 0 terminiamo il processo
-	//output: numero dei caratteri stampati in caso di successo, oppure bisogna restituire lo stato di errore negato (con - davanti)
 }
 
 void write_To_Terminal()
@@ -132,21 +126,20 @@ void write_To_Terminal()
 		SYSCALL(TERMINATE, 0, 0, 0);
 	}
 
-	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
 	int asid = supp->sup_asid;
-	int terminalAddress = DEV_REG_ADDR(TERMINT, asid - 1); // controllare se è giusto
-	unsigned int *base = (unsigned int *)(terminalAddress);
+	devreg_t* base = (devreg_t*)DEV_REG_ADDR(TERMINT, asid - 1);
+	termreg_t* term = &(base ->term); 
 	int status;
+
 	SYSCALL(PASSEREN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
 	while (*virtAddr != EOS)
 	{
-		*(base + TRANCOMMAND) = PRINTCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
+		term->transm_command = PRINTCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, FALSE);
 		if ((status & TERMSTATMASK) != RECVD)
 		{
 			retValue = status * -1; //da controllare manuale umps
 			*virtAddr = EOS;
-			//PANIC();
 		}
 		else
 		{
@@ -160,68 +153,15 @@ void write_To_Terminal()
 	LDST(newState);
 }
 
-unsigned int stat;
-
-char debug1;
-
 
 void read_From_Terminal()
-{	/*
-	char *virtAddr = (char *)(state->reg_a1);
-	if (virtAddr < (char *)UPROCSTARTADDR)
-	{
-		SYSCALL(TERMINATE, 0, 0, 0);
-	}
-	
-	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
-	int asid = supp->sup_asid;
-	int terminalAddress = DEV_REG_ADDR(TERMINT, asid - 1);
-
-	unsigned int *base = (unsigned int *)(terminalAddress);
-	unsigned int status = READY;
-	char initial_stringa = EOS;
-    char *stringa = &initial_stringa;
-	int retValue = 0;
-	char received_char = '0';
-
-	SYSCALL(PASSEREN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	while (received_char != EOS  && ((status == READY) || (status == 5) ))
-	{
-		stop2();
-		*(base + RECVCOMMAND) = RECVCHR | (((unsigned int)*virtAddr) );
-		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
-		received_char = *(base + RECVSTATUS) ;
-		rcvd = received_char;
-		if ((status & TERMSTATMASK) != RECVD)
-		{
-			retValue = status * -1; //da controllare manuale umps
-			*virtAddr = EOS;
-			//PANIC();
-		}
-		else
-		{
-			virtAddr++;
-			retValue++;
-		}
-	}
-	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	
-
-	newState->reg_v0 = retValue;
-	newState -> pc_epc +=4;
-
-	LDST(newState);
-	//note:
-	//come sys12 ma legge da terminale invece di scrivere
-	//mentre l'input viene letto il processo deve essere sospeso
-	*/
+{
 	char *virtAddr = (char*)(state->reg_a1);
 	if (virtAddr < (char *)UPROCSTARTADDR)
 	{
 		SYSCALL(TERMINATE, 0, 0, 0);
 	}
 	
-	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
 	int asid = supp->sup_asid;
 	devreg_t* address = (devreg_t*) DEV_REG_ADDR(TERMINT, asid - 1);
 	termreg_t* term = &(address->term);
@@ -236,25 +176,21 @@ void read_From_Terminal()
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
 		*virtAddr = status >> 8; 
 		rcvd = *virtAddr;
-		stop2();
+		
 		if ((status & TERMSTATMASK) != RECVD && (status & TERMSTATMASK) != READY)
 		{
 
 			retValue = status * -1; //da controllare manuale umps
 			*virtAddr = EOS;
-			//PANIC();
 		}
 		else
 		{
 			virtAddr++;
 			retValue++;
 		}
-		debug1=rcvd;
-
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
 	
-
 	newState->reg_v0 = retValue;
 	newState -> pc_epc +=4;
 
