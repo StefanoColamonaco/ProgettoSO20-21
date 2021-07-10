@@ -160,7 +160,9 @@ void write_To_Terminal()
 	LDST(newState);
 }
 
-char rcvd;
+unsigned int stat;
+
+char debug1;
 
 
 void read_From_Terminal()
@@ -213,7 +215,7 @@ void read_From_Terminal()
 	//come sys12 ma legge da terminale invece di scrivere
 	//mentre l'input viene letto il processo deve essere sospeso
 	*/
-	char *virtAddr = (char *)(state->reg_a1);
+	char *virtAddr = (char*)(state->reg_a1);
 	if (virtAddr < (char *)UPROCSTARTADDR)
 	{
 		SYSCALL(TERMINATE, 0, 0, 0);
@@ -226,17 +228,18 @@ void read_From_Terminal()
 	
 	unsigned int status = READY;
 	int retValue = 0;
-	char received_char = '0';
+	char rcvd = '0';
 
-	while (received_char != EOS  && ((status == READY) || (status == 5) ))
+	while ((rcvd != '\n' ) && (((status & TERMSTATMASK) == READY) || ((status & TERMSTATMASK) == 5) ))
 	{
-		term->recv_command = RECVCHR;
+		term->recv_command = RECVCHR; 
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
-		received_char = (term->recv_status) >> 8 ;
-		rcvd = received_char;
+		*virtAddr = status >> 8; 
+		rcvd = *virtAddr;
 		stop2();
-		if ((status & TERMSTATMASK) != RECVD)
+		if ((status & TERMSTATMASK) != RECVD && (status & TERMSTATMASK) != READY)
 		{
+
 			retValue = status * -1; //da controllare manuale umps
 			*virtAddr = EOS;
 			//PANIC();
@@ -246,6 +249,8 @@ void read_From_Terminal()
 			virtAddr++;
 			retValue++;
 		}
+		debug1=rcvd;
+
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
 	

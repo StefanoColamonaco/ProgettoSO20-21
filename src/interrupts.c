@@ -27,7 +27,7 @@ static inline void acknowledgeTermInterrupt(termreg_t *dev);
 
 static inline int terminalIsRECV(termreg_t dev);
 
-static inline unsigned int getTermStatus(termreg_t dev);
+static inline unsigned int getTermStatus(termreg_t*dev);
 
 
 
@@ -99,21 +99,25 @@ void handleIntervalTimerInterrupt() {
 }
 
 int recv;
+int both;
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = 0;
     recv = 0;
+    both = 0;
 
     if (interruptLine == TERMINT) {
-        savedStatus = getTermStatus(dev->term);
+        savedStatus = getTermStatus(&dev->term);
         acknowledgeTermInterrupt(&dev->term);
     } else {
         savedStatus = dev->dtp.status;
         acknowledgeDTPInterrupt(&dev->dtp);
     }
-
+    if(both) {
+        releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, 1), savedStatus);
+    }
     releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, recv), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
@@ -152,20 +156,28 @@ static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
 }
 
 static void acknowledgeTermInterrupt(termreg_t *dev) {
-    if(terminalIsRECV(*dev)) {
+    if(dev->recv_status != READY && dev->transm_status != READY){
+        
         dev->recv_command = ACK;
-        recv = 1;
-    } else {
         dev->transm_command = ACK;
+        both = 1;
+    }else{
+        if(terminalIsRECV(*dev)) {
+            dev->recv_command = ACK;
+            recv = 1;
+        } else {
+            dev->transm_command = ACK;
+        }
     }
+    
 }
 
 /*check if terminal is RECV or TRANSM and returns the status accordingly*/
-static inline unsigned int getTermStatus(termreg_t dev) {
-    if (terminalIsRECV(dev)) {
-        return dev.recv_status;
+static inline unsigned int getTermStatus(termreg_t* dev) {
+    if (terminalIsRECV(*dev)) {
+        return dev->recv_status;
     } else {
-        return dev.transm_status;
+        return dev->transm_status;
     }
 }
 
