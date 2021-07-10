@@ -95,9 +95,11 @@ void write_To_Printer()
 	SYSCALL(PASSEREN, (unsigned int)&(printerSemaphores[asid]), 0, 0);
 	while (*virtAddr != EOS)
 	{
+		disable_interrupts();
 		dtp->data0 = *virtAddr;
 		dtp->command = PRINTCHR;
 		status = SYSCALL(IOWAIT, PRNTINT, asid - 1, 0);
+		enable_interrupts();
 
 		if (((status & PRINTSTATMASK) != PRINTDEVREADY) && ((status & PRINTSTATMASK) != PRINTDEVREADY))
 		{
@@ -136,8 +138,10 @@ void write_To_Terminal()
 	SYSCALL(PASSEREN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
 	while (*virtAddr != EOS)
 	{
+		disable_interrupts();
 		term->transm_command = PRINTCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, FALSE);
+		enable_interrupts();
 		if ((status & TERMSTATMASK) != RECVD)
 		{
 			retValue = status * -1; //da controllare manuale umps
@@ -172,16 +176,19 @@ void read_From_Terminal()
 	int retValue = 0;
 	char rcvd = '0';
 
+
+	SYSCALL(PASSEREN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
 	while ((rcvd != '\n' ) && (((status & TERMSTATMASK) == READY) || ((status & TERMSTATMASK) == 5) ))
 	{
+		disable_interrupts();
 		term->recv_command = RECVCHR; 
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
+		enable_interrupts();
 		*virtAddr = status >> 8; 
 		rcvd = *virtAddr;
 		
 		if ((status & TERMSTATMASK) != RECVD && (status & TERMSTATMASK) != READY)
 		{
-
 			retValue = status * -1; //da controllare manuale umps
 			*virtAddr = EOS;
 		}

@@ -18,6 +18,10 @@
 #define WRITEBLK 3
 
 
+
+
+
+
 swap_t swapTable[POOLSIZE];
 unsigned int swapFloor;
 
@@ -60,6 +64,8 @@ static void markInvalidAndSave(swap_t* frameToReplace);
 int PTEentryIsValid(pteEntry_t *entry);
 
 static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
+
+
 
 
 void initSwapStructs() {
@@ -140,21 +146,19 @@ static void handleTLBInvalid(support_t *supp) {
 
 
 static void markInvalidAndSave(swap_t *frameToReplace) {
-    unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus & DISABLEINTS);
+    disable_interrupts();
     markPTEntryNotValid(frameToReplace->sw_pte);
     markTLBEntryNotValid(frameToReplace->sw_pte);
-    setSTATUS(oldStatus);
+    enable_interrupts();
     writeFromPoolToDev(frameToReplace);
 }
 
 
 static void markValidAndUpdateTLB(pteEntry_t *page) {
-    unsigned int oldStatus = getSTATUS();
-    setSTATUS(oldStatus & DISABLEINTS);     //TODO possibly wrong. check correct mask
+    disable_interrupts();
     markEntryPresentAtIndex(page, frameIndexToReplace);      //TODO: Verify
     updateEntryInTLB(page);
-    setSTATUS(oldStatus);
+    enable_interrupts();
 }
 
 
@@ -202,9 +206,11 @@ static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
+    disable_interrupts();
     dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo, 0);
+    enable_interrupts();
 }
 
 static void writeFromDevToPool(pteEntry_t *page) {           
@@ -212,9 +218,11 @@ static void writeFromDevToPool(pteEntry_t *page) {
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     unsigned int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
     if(blockNum == LASTPAGEMASK) blockNum = MAXPAGES-1;
+    disable_interrupts();
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo ,0);
+    enable_interrupts();
 }
 
 

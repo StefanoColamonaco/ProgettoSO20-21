@@ -1,8 +1,13 @@
 #ifndef PROGETTOSO20_21_INTERRUPTS_H
 #define PROGETTOSO20_21_INTERRUPTS_H
 
-#include "init.h"
-#include "scheduler.h"
+
+extern unsigned int old_status;
+
+inline void disable_interrupts();
+
+inline void enable_interrupts();
+
 
 /*interrupt handling entry point*/
 void handleInterrupts();
