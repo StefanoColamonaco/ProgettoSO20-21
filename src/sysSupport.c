@@ -41,6 +41,16 @@ void uTLB_RefillHandler () {
 	contextSwitch(currentProcess);
 }
 
+pteEntry_t *getMissingPageVariant(unsigned int badVAddr) {      //TODO add GETSUPP so we can use this in level 3
+    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
+    for (int i = 0; i < MAXPAGES; i++) {
+        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {
+            return &pageTable[i];
+        }
+    }
+    SYSCALL(TERMPROCESS, 0, 0, 0);
+    return NULL;
+}
 
 
 
