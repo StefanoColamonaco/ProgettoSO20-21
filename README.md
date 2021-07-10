@@ -29,10 +29,27 @@ The device generating the interrupt is identified and the interrupt is resolved.
 ### Scheduler
 Simple preemptive and round-robin algorithm with basic deadlock detection.
 
-### System Calls
-System calls are handled here. duh
+### Nucleous System Calls
+Nucleous yystem calls are handled here. duh
 Any call not numbered 0-8 (inclusive) is passed up.
 
+
+## Phase 3
+Three new main modules are added. All phase3 structures are initialized in p3test.c
+
+### Support-level System Calls
+Support-level system calls are handled here.
+The calls are numbered 9-13 and provide support to Uprocs (support level processes). In particular in interfacing with devices.
+
+### VMSupport
+Contains all the functions needed by the pager to manage the main memory and any errors (page faults)
+
+### SysSupport
+Contains support-level exception handler.
+Contains also the UTLBRefillHandler, which takes care of filling the TLB correctly (and some auxiliary functions).
+
+### Important note
+Important note: although the AUTHORS file remained unchanged until the previous phase, the work of the whole project was only handled by the participants present in the current file. The other two members of the group stated that they will not show up for the presentation of the project.
 
 ## Compiling
 Just before linking, "find" is used to locate the linker script. This may cause a delay of a few seconds.
