@@ -7,6 +7,7 @@
 #include "stateUtil.h"
 #include "interrupts.h"
 #include "supportSystemCalls.h"
+#include "p3test.c"
 
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
@@ -59,6 +60,7 @@ void handleSupportSystemcalls(state_t *systemState, support_t *support)
 /* Wrapper for SYS2 at support level */
 void terminate_support()
 {
+	notifyTerminated();
 	SYSCALL(TERMPROCESS, 0, 0, 0); //accertarsi che rilasci correttamente i semafori a livello supporto
 }
 
