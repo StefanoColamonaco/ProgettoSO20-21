@@ -49,7 +49,7 @@ Contains support-level exception handler.
 Contains also the UTLBRefillHandler, which takes care of filling the TLB correctly (and some auxiliary functions).
 
 ### Important note
-Important note: although the AUTHORS file remained unchanged until the previous phase, the work of the whole project was only handled by the participants present in the current file. The other two members of the group stated that they will not show up for the presentation of the project.
+Although the AUTHORS file remained unchanged until the previous phase, the work of the whole project was only handled by the participants present in the current file. The other two members of the group stated that they will not show up for the presentation of the project.
 
 ## Compiling
 Just before linking, "find" is used to locate the linker script. This may cause a delay of a few seconds.
