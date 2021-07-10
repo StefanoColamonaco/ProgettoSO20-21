@@ -72,6 +72,7 @@ pcb_t *initFirstProcess() {
         return firstProcess;
     } else {
         PANIC();
+        return NULL;
     }    
 }
 

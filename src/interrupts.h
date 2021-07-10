@@ -4,10 +4,9 @@
 
 extern unsigned int old_status;
 
-inline void disable_interrupts();
+extern void disable_interrupts();
 
-inline void enable_interrupts();
-
+extern void enable_interrupts();
 
 /*interrupt handling entry point*/
 void handleInterrupts();

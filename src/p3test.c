@@ -7,6 +7,7 @@
 #include "print.h"
 
 #include "pcb.h"
+#include "p3test.h"
 #include "sysSupport.h"
 #include "tests/vmSupportTest.h"
 #include "vmSupport.h"
@@ -33,7 +34,7 @@ static void init_uproc_state(int asid);
 static void init_uproc_support(int asid);
 
 // ATTENZIONE, VARIABILE DA SOSTITUIRE CON UPROCMAX IN TUTTO IL FILE:
-int procNum = 8;
+int procNum = 1;
 
 void test_phase_3() {
 	initSwapStructs();
@@ -107,5 +108,3 @@ static void waitForUprocs() {
 void notifyTerminated() {
 	SYSCALL(VERHOGEN, (unsigned int) &masterSem, 0, 0);
 }
-
-

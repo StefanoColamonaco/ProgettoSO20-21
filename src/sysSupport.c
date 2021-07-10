@@ -53,7 +53,7 @@ pteEntry_t *getMissingPage() {      //TODO add GETSUPP so we can use this in lev
         }
     }
     SYSCALL(TERMPROCESS, 0, 0, 0);
-    return -1;
+    return NULL;
 }
 
 void programTrapHandler( support_t *supportStruct){

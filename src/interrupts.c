@@ -5,6 +5,8 @@
 #include <umps3/umps/arch.h>
 
 #include "init.h"
+#include "pcb.h"
+#include "asl.h"
 #include "scheduler.h"
 #include "stateUtil.h"
 #include "interrupts.h"
@@ -207,6 +209,8 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
             
     default:
         PANIC();
+    
+    return 0;
     }
 }
 

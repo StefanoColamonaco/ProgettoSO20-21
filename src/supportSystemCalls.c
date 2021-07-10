@@ -7,7 +7,7 @@
 #include "stateUtil.h"
 #include "interrupts.h"
 #include "supportSystemCalls.h"
-#include "p3test.c"
+#include "p3test.h"
 
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
