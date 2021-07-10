@@ -112,7 +112,6 @@ void write_To_Printer()
 	//se c' è errore sovrascrivo retvalue con - il valore dello status
 	newState->reg_v0 = retValue;
 	newState -> pc_epc +=4;
-	stop2();
 	LDST(newState);
 
 	//note:
@@ -158,33 +157,39 @@ void write_To_Terminal()
 	SYSCALL(VERHOGEN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
 	newState->reg_v0 = retValue;
 	newState -> pc_epc +=4;
-	stop2();
 	LDST(newState);
 }
 
+char rcvd;
+
+
 void read_From_Terminal()
-{
+{	/*
 	char *virtAddr = (char *)(state->reg_a1);
 	if (virtAddr < (char *)UPROCSTARTADDR)
 	{
 		SYSCALL(TERMINATE, 0, 0, 0);
 	}
-
+	
 	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
 	int asid = supp->sup_asid;
 	int terminalAddress = DEV_REG_ADDR(TERMINT, asid - 1);
-	;
+
 	unsigned int *base = (unsigned int *)(terminalAddress);
-	unsigned int status = 1;
+	unsigned int status = READY;
+	char initial_stringa = EOS;
+    char *stringa = &initial_stringa;
 	int retValue = 0;
 	char received_char = '0';
 
 	SYSCALL(PASSEREN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
-	while (received_char != EOS  && ((status == READY) || (status == 5) )/*verificare se servono altri controlli di fine stringa es \n \r etc*/)
+	while (received_char != EOS  && ((status == READY) || (status == 5) ))
 	{
-		*(base + RECVCOMMAND) = RECVCHR | (((unsigned int)*virtAddr) << BYTELENGTH);
+		stop2();
+		*(base + RECVCOMMAND) = RECVCHR | (((unsigned int)*virtAddr) );
 		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
-		//received_char = base ->term.recv_status >> 8;
+		received_char = *(base + RECVSTATUS) ;
+		rcvd = received_char;
 		if ((status & TERMSTATMASK) != RECVD)
 		{
 			retValue = status * -1; //da controllare manuale umps
@@ -198,11 +203,56 @@ void read_From_Terminal()
 		}
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
+	
+
 	newState->reg_v0 = retValue;
 	newState -> pc_epc +=4;
-	stop2();
+
 	LDST(newState);
 	//note:
 	//come sys12 ma legge da terminale invece di scrivere
 	//mentre l'input viene letto il processo deve essere sospeso
+	*/
+	char *virtAddr = (char *)(state->reg_a1);
+	if (virtAddr < (char *)UPROCSTARTADDR)
+	{
+		SYSCALL(TERMINATE, 0, 0, 0);
+	}
+	
+	support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0); //verificare se serve sta cosa
+	int asid = supp->sup_asid;
+	devreg_t* address = (devreg_t*) DEV_REG_ADDR(TERMINT, asid - 1);
+	termreg_t* term = &(address->term);
+	
+	unsigned int status = READY;
+	int retValue = 0;
+	char received_char = '0';
+
+	while (received_char != EOS  && ((status == READY) || (status == 5) ))
+	{
+		term->recv_command = RECVCHR;
+		status = SYSCALL(IOWAIT, TERMINT, asid - 1, TRUE);
+		received_char = (term->recv_status) >> 8 ;
+		rcvd = received_char;
+		stop2();
+		if ((status & TERMSTATMASK) != RECVD)
+		{
+			retValue = status * -1; //da controllare manuale umps
+			*virtAddr = EOS;
+			//PANIC();
+		}
+		else
+		{
+			virtAddr++;
+			retValue++;
+		}
+	}
+	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
+	
+
+	newState->reg_v0 = retValue;
+	newState -> pc_epc +=4;
+
+	LDST(newState);
 }
+

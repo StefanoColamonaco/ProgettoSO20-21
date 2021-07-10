@@ -174,6 +174,7 @@ void verhogen()
 blocks a process until an I / O operation is completed
 I / O operations take arbitrary time, so the process is put "on hold"
 */
+
 void wait_For_IO()
 {
 	int lineNumber = currentProcess->p_s.reg_a1;

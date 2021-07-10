@@ -98,10 +98,13 @@ void handleIntervalTimerInterrupt() {
     }
 }
 
+int recv;
+
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = 0;
+    recv = 0;
 
     if (interruptLine == TERMINT) {
         savedStatus = getTermStatus(dev->term);
@@ -111,7 +114,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
         acknowledgeDTPInterrupt(&dev->dtp);
     }
 
-    releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, terminalIsRECV(dev->term)), savedStatus);
+    releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, recv), savedStatus);
     startT = getTIMER();
     if(currentProcess == NULL){
         scheduler();
@@ -128,6 +131,7 @@ unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
     }
     return -1;
 }
+
 
 /*V operation on the semaphore associated to the device number */
 void releaseSemAndUpdateStatus(int deviceNo, unsigned int status) {
@@ -150,6 +154,7 @@ static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
 static void acknowledgeTermInterrupt(termreg_t *dev) {
     if(terminalIsRECV(*dev)) {
         dev->recv_command = ACK;
+        recv = 1;
     } else {
         dev->transm_command = ACK;
     }
