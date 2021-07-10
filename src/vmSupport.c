@@ -198,24 +198,13 @@ static inline int frameAddrInPool(int frameIndex) {
     return swapFloor + frameIndex * 4096;
 }
 
-static unsigned int frameAddr;
-static unsigned int pfn;
-
 static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;
-    pfn = ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
-    frameAddr = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo, 0);
-}
-
-unsigned int atest;
-
-void stop(){
-
 }
 
 static void writeFromDevToPool(pteEntry_t *page) {           
@@ -223,9 +212,6 @@ static void writeFromDevToPool(pteEntry_t *page) {
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     unsigned int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
     if(blockNum == LASTPAGEMASK) blockNum = MAXPAGES-1;
-    atest = blockNum;
-    stop();
-    pfn = frameIndexToReplace;
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo ,0);
@@ -240,7 +226,7 @@ static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
 
 
 static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
-    frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
+    unsigned int frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     page->pte_entryLO = frameAddr | VALIDON | DIRTYON;        //TODO check
     //page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
 }
