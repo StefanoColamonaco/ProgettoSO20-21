@@ -1,10 +1,7 @@
 #ifndef PROGETTOSO20_21_SYSTEMCALLS_H
 #define PROGETTOSO20_21_SYSTEMCALLS_H
 
-#include "pandos_types.h"
-#include "pandos_const.h"
-#include "pcb.h"
-#include "asl.h"
+
 
 extern int *mutex;
 
