@@ -4,12 +4,17 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/arch.h>
 
+#include "init.h"
+#include "scheduler.h"
 #include "stateUtil.h"
 #include "interrupts.h"
 #include "nucleousSystemCalls.h"
 
 #define PLTINT 1
 #define INTERTIMEINT 2
+
+
+unsigned int old_status = 0;
 
 cpu_t stopT;
 
@@ -208,4 +213,14 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
 
 static int terminalIsRECV(termreg_t dev) {
     return dev.recv_status != READY;
+}
+
+
+void disable_interrupts() {
+    old_status = getSTATUS();
+    setSTATUS(old_status & DISABLEINTS);
+}
+
+void enable_interrupts() {
+    setSTATUS(old_status);
 }
