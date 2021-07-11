@@ -13,7 +13,6 @@
 
 /* function that handle support level exceptions */
 void handleSupportLevelExceptions(){
-    state_t systemState = *((state_t*) BIOSDATAPAGE);
     support_t* supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
     unsigned int cause = supp->sup_exceptState[GENERALEXCEPT].cause;
  
@@ -21,7 +20,7 @@ void handleSupportLevelExceptions(){
         //treat as program trap
         programTrapHandler(supp);
     } else {                 
-        handleSupportSystemcalls(&systemState, supp);
+        handleSupportSystemcalls(supp);
     }
 }
 

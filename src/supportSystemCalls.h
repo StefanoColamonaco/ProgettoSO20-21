@@ -1,7 +1,7 @@
 #ifndef PROGETTOSO20_21_SUPPORTSYSCALLS_H
 #define PROGETTOSO20_21_SUPPORTSYSCALLS_H
 
-void handleSupportSystemcalls(state_t *systemState, support_t* support);
+void handleSupportSystemcalls(support_t* support);
 
 #define PRINTCHR 2
 #define RECVCHR 2

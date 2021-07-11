@@ -17,10 +17,10 @@
 state_t *excState;
 support_t *supp;
 
-void handleSupportSystemcalls(state_t *systemState, support_t *support)
+void handleSupportSystemcalls(support_t *support)
 {
 	excState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
-	int currentSyscall = systemState->reg_a0;
+	int currentSyscall = excState->reg_a0;
 	supp = support;
 
 	switch (currentSyscall)
