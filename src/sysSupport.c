@@ -15,7 +15,7 @@
 void handleSupportLevelExceptions(){
     state_t systemState = *((state_t*) BIOSDATAPAGE);
     support_t* supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
-    unsigned int cause = supp->sup_exceptState[0].cause;
+    unsigned int cause = supp->sup_exceptState[GENERALEXCEPT].cause;
  
     if (cause == EXC_MOD) {     //trying to write on read-only
         //treat as program trap
@@ -41,10 +41,11 @@ void uTLB_RefillHandler () {
 	contextSwitch(currentProcess);
 }
 
-pteEntry_t *getMissingPageVariant(unsigned int badVAddr) {      //TODO add GETSUPP so we can use this in level 3
+pteEntry_t *getMissingPageVariant() {      //TODO add GETSUPP so we can use this in level 3
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
+    unsigned int _badVAddr = getENTRYHI();
     for (int i = 0; i < MAXPAGES; i++) {
-        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {
+        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(_badVAddr)) {
             return &pageTable[i];
         }
     }

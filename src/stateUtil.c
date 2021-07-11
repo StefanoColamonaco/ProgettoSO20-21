@@ -13,6 +13,7 @@ void copyState(state_t *src, state_t *dest){
     dest -> cause = src -> cause;
     dest -> status = src -> status;
     dest -> hi = src -> hi;
+    dest -> lo = src -> lo;
 }
 
 void * memcpy (void *dest, const void *src, size_t len)

@@ -64,8 +64,9 @@ system call was raised and we give control to the BIOS exceptions handler
 (also in this case we terminate the process and pass control to the scheduler)
 */
 
+
 void passupOrDie(int exceptionType){
-    if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                                 
+    if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                            
         copyState((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
         LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].stackPtr,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].status,

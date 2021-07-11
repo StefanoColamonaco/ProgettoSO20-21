@@ -14,15 +14,13 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/const.h>
 
-state_t *state;
-state_t *newState;
+state_t *excState;
 support_t *supp;
 
 void handleSupportSystemcalls(state_t *systemState, support_t *support)
 {
-	newState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
+	excState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
 	int currentSyscall = systemState->reg_a0;
-	state = systemState;
 	supp = support;
 
 	switch (currentSyscall)
@@ -69,16 +67,16 @@ void get_TOD()
 {
 	cpu_t stopT;
 	STCK(stopT);
-	state->reg_v0 = globalStartT - stopT;
-	LDST(state);
+	excState->reg_v0 = globalStartT - stopT;
+	LDST(excState);
 }
 
 /* system call that manages the printing of an entire string passed as argument*/
 void write_To_Printer()
 {
 
-	char *virtAddr = (char *)(state->reg_a1);
-	int strlen = state->reg_a2;
+	char *virtAddr = (char *)(excState->reg_a1);
+	int strlen = excState->reg_a2;
 	int retValue = 0;
 
 	if (strlen <= 0 || strlen > 128 || virtAddr < (char *)UPROCSTARTADDR || (virtAddr + strlen) >= (char *)USERSTACKTOP /*indirizzo fuori dalla VM*/)
@@ -114,15 +112,15 @@ void write_To_Printer()
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(printerSemaphores[asid]), 0, 0);
 
-	newState->reg_v0 = retValue;
-	newState -> pc_epc +=4;
-	LDST(newState);
+	excState->reg_v0 = retValue;
+	excState -> pc_epc +=4;
+	LDST(excState);
 }
 
 void write_To_Terminal()
 {
-	char *virtAddr = (char *)(state->reg_a1);
-	int strlen = state->reg_a2;
+	char *virtAddr = (char *)(excState->reg_a1);
+	int strlen = excState->reg_a2;
 	int retValue = 0;
 
 	if (strlen <= 0 || strlen > 128 || virtAddr < (char *)UPROCSTARTADDR || (virtAddr + strlen) >= (char *)USERSTACKTOP /*indirizzo fuori dalla VM*/)
@@ -154,15 +152,15 @@ void write_To_Terminal()
 		}
 	}
 	SYSCALL(VERHOGEN, (unsigned int)(&termWriteSemaphores[asid]), 0, 0);
-	newState->reg_v0 = retValue;
-	newState -> pc_epc +=4;
-	LDST(newState);
+	excState->reg_v0 = retValue;
+	excState -> pc_epc +=4;
+	LDST(excState);
 }
 
 
 void read_From_Terminal()
 {
-	char *virtAddr = (char*)(state->reg_a1);
+	char *virtAddr = (char*)(excState->reg_a1);
 	if (virtAddr < (char *)UPROCSTARTADDR)
 	{
 		SYSCALL(TERMINATE, 0, 0, 0);
@@ -200,9 +198,9 @@ void read_From_Terminal()
 	}
 	SYSCALL(VERHOGEN, (unsigned int)&(termReadSemaphores[asid]), 0, 0);
 	
-	newState->reg_v0 = retValue;
-	newState -> pc_epc +=4;
+	excState->reg_v0 = retValue;
+	excState -> pc_epc +=4;
 
-	LDST(newState);
+	LDST(excState);
 }
 

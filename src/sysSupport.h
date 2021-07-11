@@ -10,7 +10,7 @@ void uTLB_RefillHandler();
 
 pteEntry_t *getMissingPage();
 
-pteEntry_t *getMissingPageVariant(unsigned int badVAddr);
+pteEntry_t *getMissingPageVariant();
 
 void programTrapHandler( support_t *supp);
 

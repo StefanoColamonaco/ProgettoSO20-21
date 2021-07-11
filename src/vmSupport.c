@@ -129,8 +129,8 @@ void handlePageFault() {
 }
 
 static void handleTLBInvalid(support_t *supp) {
-    state_t *state = (state_t*) &(supp->sup_exceptState[0]);
-    pteEntry_t *missingPage = /*getMissingPage();*/getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
+    //state_t *state = (state_t*) &(supp->sup_exceptState[0]);
+    pteEntry_t *missingPage = getMissingPageVariant();//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
     updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
@@ -191,6 +191,7 @@ static void markTLBEntryNotValid(pteEntry_t* entry) {
     unsigned int indexReg = getINDEX();
     if (indexReg >> 31 == OFF) {  //check p bit for valid index 
         TLBR();
+        setENTRYHI(entry->pte_entryHI);
         unsigned int entryLO = getENTRYLO();
         entryLO &= ~VALIDON;
         setENTRYLO(entryLO);
@@ -248,6 +249,7 @@ void updateEntryInTLB(pteEntry_t* entry) {
     unsigned int indexReg = getINDEX();
     if (indexReg >> 31 == OFF) {  //check p bit for valid index
         TLBR();
+        setENTRYHI(entry->pte_entryHI);
         setENTRYLO(entry->pte_entryLO);
         TLBWI();
     }
