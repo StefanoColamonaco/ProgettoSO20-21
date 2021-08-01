@@ -65,6 +65,8 @@ int PTEentryIsValid(pteEntry_t *entry);
 
 static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
 
+static int getBlockNum(int entryHI);
+
 
 
 
@@ -166,7 +168,7 @@ static void markValidAndUpdateTLB(pteEntry_t *page) {
 
 static void updateFrameIndexToReplace() {
     for (int i = 0; i < POOLSIZE; i++) {
-        if (swapTable[i].sw_asid == -1) {
+        if (swapTable[i].sw_asid == -1 || !PTEentryIsValid(swapTable[i].sw_pte)){
             frameIndexToReplace = i;
             return;
         }
@@ -207,9 +209,9 @@ static inline int frameAddrInPool(int frameIndex) {
 static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
-    int blockNum = frame->sw_pageNo;
+    int blockNum = frame->sw_pageNo;        //TODO check index 31. 
     disable_interrupts();
-    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
+    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
     dev->dtp.command = blockNum << 8 | WRITEBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo, 0);
     enable_interrupts();
@@ -218,27 +220,33 @@ static void writeFromPoolToDev(swap_t* frame) {
 static void writeFromDevToPool(pteEntry_t *page) {           
     int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
-    unsigned int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
-    if(blockNum == LASTPAGEMASK) blockNum = MAXPAGES-1;
+    unsigned int blockNum = getBlockNum(page->pte_entryHI);
     disable_interrupts();
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
-    SYSCALL(IOWAIT, FLASHINT, devNo ,0);
+    SYSCALL(IOWAIT, FLASHINT, devNo, 0);
     enable_interrupts();
+}
+
+static int getBlockNum(int entryHI) {
+    unsigned int blockNum = ENTRYHI_GET_VPN(entryHI);
+    if(blockNum == LASTPAGEMASK) {
+        blockNum = MAXPAGES-1;
+    }
+    return blockNum;
 }
 
 
 static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
     swapEntry->sw_asid = ENTRYHI_GET_ASID(pageToAdd->pte_entryHI);
     swapEntry->sw_pte = pageToAdd;
-    swapEntry->sw_pageNo = ENTRYHI_GET_VPN(pageToAdd->pte_entryHI);
+    swapEntry->sw_pageNo = getBlockNum(pageToAdd->pte_entryHI);
 }
 
 
 static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
     unsigned int frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
-    page->pte_entryLO = frameAddr | VALIDON | DIRTYON;        //TODO check
-    //page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
+    page->pte_entryLO = (frameIndexToReplace << ENTRYLO_PFN_BIT) | VALIDON | DIRTYON;        //TODO check
 }
 
 

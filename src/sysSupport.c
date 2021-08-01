@@ -31,7 +31,7 @@ void updateTLBIndex(){
 }
 
 void uTLB_RefillHandler () {
-	pteEntry_t *pageToWrite = getMissingPage();
+	pteEntry_t *pageToWrite = getMissingPageVariant();// getMissingPage();
 	setENTRYHI(pageToWrite->pte_entryHI);
 	setENTRYLO(pageToWrite->pte_entryLO);
     setINDEX(tlbIndex << INDEXSHIFT);

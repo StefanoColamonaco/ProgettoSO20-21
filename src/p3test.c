@@ -34,7 +34,7 @@ static void init_uproc_state(int asid);
 static void init_uproc_support(int asid);
 
 // ATTENZIONE, VARIABILE DA SOSTITUIRE CON UPROCMAX IN TUTTO IL FILE:
-int procNum = 2;
+int procNum = 3;
 
 void test_phase_3() {
 	initSwapStructs();
