@@ -67,6 +67,8 @@ static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
 
 static int getBlockNum(int entryHI);
 
+static pteEntry_t* getMissingPageFromSavedState();
+
 
 
 
@@ -116,23 +118,22 @@ void init_uproc_pagetable(support_t * supp) {
 
 /*pager*/
 void handlePageFault() {
-    support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0 ,0);
+    support_t *supp = (support_t *)SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     unsigned int cause = supp->sup_exceptState[0].cause;
     if (cause == EXC_MOD) {     //trying to write on read-only
         programTrapHandler(supp);
-    } else {                    //page fault on load or store. at this point the TLB has already been refilled
+    } else {           //page fault on load or store. at this point the TLB has already been refilled
         SYSCALL(PASSEREN, (int)&swapSem, 0, 0);
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0); 
         
-        supp->sup_exceptState[0].pc_epc +=4;   
+        //supp->sup_exceptState[0].pc_epc +=4;       
         LDST(&(supp->sup_exceptState[0]));   
     }
 }
 
 static void handleTLBInvalid(support_t *supp) {
-    //state_t *state = (state_t*) &(supp->sup_exceptState[0]);
-    pteEntry_t *missingPage = getMissingPageVariant();//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
+    pteEntry_t *missingPage = getMissingPageFromSavedState();//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
     updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
@@ -146,6 +147,19 @@ static void handleTLBInvalid(support_t *supp) {
     markValidAndUpdateTLB(missingPage);
 }
 
+
+static pteEntry_t* getMissingPageFromSavedState() {
+    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
+    state_t* saved_state = &currentProcess->p_supportStruct->sup_exceptState[PGFAULTEXCEPT];
+    unsigned int badVAddr = ENTRYHI_GET_VPN(saved_state->entry_hi);
+    for (int i = 0; i < MAXPAGES; i++) {
+        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
+            return &pageTable[i];
+        }
+    }
+    SYSCALL(TERMPROCESS, 0, 0, 0);
+    return NULL;
+}
 
 
 static void markInvalidAndSave(swap_t *frameToReplace) {
@@ -168,7 +182,7 @@ static void markValidAndUpdateTLB(pteEntry_t *page) {
 
 static void updateFrameIndexToReplace() {
     for (int i = 0; i < POOLSIZE; i++) {
-        if (swapTable[i].sw_asid == -1 || !PTEentryIsValid(swapTable[i].sw_pte)){
+        if (swapTable[i].sw_asid == -1){
             frameIndexToReplace = i;
             return;
         }
@@ -211,7 +225,7 @@ static void writeFromPoolToDev(swap_t* frame) {
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
     int blockNum = frame->sw_pageNo;        //TODO check index 31. 
     disable_interrupts();
-    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO);
+    dev->dtp.data0 = FRAMEPOOLSTART + ENTRYLO_GET_PFN(frame->sw_pte->pte_entryLO) * PAGESIZE;
     dev->dtp.command = blockNum << 8 | WRITEBLK;
     SYSCALL(IOWAIT, FLASHINT, devNo, 0);
     enable_interrupts();
@@ -246,7 +260,7 @@ static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
 
 static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
     unsigned int frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
-    page->pte_entryLO = (frameIndexToReplace << ENTRYLO_PFN_BIT) | VALIDON | DIRTYON;        //TODO check
+    page->pte_entryLO = frameAddr | VALIDON | DIRTYON;        //TODO check
 }
 
 
@@ -256,7 +270,7 @@ void updateEntryInTLB(pteEntry_t* entry) {
     TLBP();
     unsigned int indexReg = getINDEX();
     if (indexReg >> 31 == OFF) {  //check p bit for valid index
-        TLBR();
+        //TLBR();
         setENTRYHI(entry->pte_entryHI);
         setENTRYLO(entry->pte_entryLO);
         TLBWI();
