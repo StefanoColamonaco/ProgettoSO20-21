@@ -221,10 +221,9 @@ static int terminalIsRECV(termreg_t dev) {
 
 
 void disable_interrupts() {
-    old_status = getSTATUS();
-    setSTATUS(old_status & DISABLEINTS);
+    setSTATUS(getSTATUS() & DISABLEINTS);
 }
 
 void enable_interrupts() {
-    setSTATUS(old_status);
+    setSTATUS(getSTATUS() | ~DISABLEINTS);
 }

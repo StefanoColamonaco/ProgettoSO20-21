@@ -40,11 +40,12 @@ void uTLB_RefillHandler () {
 	contextSwitch(currentProcess);
 }
 
-pteEntry_t *getMissingPageVariant() {      //TODO add GETSUPP so we can use this in level 3
-    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    unsigned int _badVAddr = getENTRYHI();
+pteEntry_t *getMissingPageVariant(support_t* supp) {      //TODO add GETSUPP so we can use this in level 3
+    pteEntry_t *pageTable = supp->sup_privatePgTbl;
+    state_t* saved_state = &supp->sup_exceptState[0];
+    unsigned int badVAddr = ENTRYHI_GET_VPN(saved_state->entry_hi);
     for (int i = 0; i < MAXPAGES; i++) {
-        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(_badVAddr)) {
+        if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
             return &pageTable[i];
         }
     }

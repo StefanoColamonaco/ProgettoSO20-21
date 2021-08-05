@@ -123,14 +123,14 @@ void handlePageFault() {
         handleTLBInvalid(supp);
         SYSCALL(VERHOGEN, (int)&swapSem, 0, 0); 
         
-        supp->sup_exceptState[0].pc_epc +=4;   
+        //supp->sup_exceptState[0].pc_epc +=4;   
         LDST(&(supp->sup_exceptState[0]));   
     }
 }
 
 static void handleTLBInvalid(support_t *supp) {
     //state_t *state = (state_t*) &(supp->sup_exceptState[0]);
-    pteEntry_t *missingPage = getMissingPageVariant();//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
+    pteEntry_t *missingPage = getMissingPageVariant(supp);//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
     updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
@@ -204,6 +204,14 @@ static inline int frameAddrInPool(int frameIndex) {
     return swapFloor + frameIndex * 4096;
 }
 
+int getPageNum(unsigned int entryHi) {
+    unsigned int blockNum = ENTRYHI_GET_VPN(entryHi);
+    if(blockNum == LASTPAGEMASK) {
+        blockNum = MAXPAGES-1;
+    }
+    return blockNum;
+}
+
 static void writeFromPoolToDev(swap_t* frame) {
     int devNo = frame->sw_asid - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
@@ -218,8 +226,7 @@ static void writeFromPoolToDev(swap_t* frame) {
 static void writeFromDevToPool(pteEntry_t *page) {           
     int devNo = ENTRYHI_GET_ASID(page->pte_entryHI) - 1;
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(IL_FLASH, devNo);
-    unsigned int blockNum = ENTRYHI_GET_VPN(page->pte_entryHI);
-    if(blockNum == LASTPAGEMASK) blockNum = MAXPAGES-1;
+    unsigned int blockNum = getPageNum(page->pte_entryHI);
     disable_interrupts();
     dev->dtp.data0 = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
     dev->dtp.command = blockNum << 8 | READBLK;
@@ -231,14 +238,13 @@ static void writeFromDevToPool(pteEntry_t *page) {
 static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd) {
     swapEntry->sw_asid = ENTRYHI_GET_ASID(pageToAdd->pte_entryHI);
     swapEntry->sw_pte = pageToAdd;
-    swapEntry->sw_pageNo = ENTRYHI_GET_VPN(pageToAdd->pte_entryHI);
+    swapEntry->sw_pageNo = getPageNum(pageToAdd->pte_entryHI);
 }
 
 
 static void markEntryPresentAtIndex(pteEntry_t *page, int newIndex) {
     unsigned int frameAddr = FRAMEPOOLSTART + frameIndexToReplace * PAGESIZE;
-    page->pte_entryLO = frameAddr | VALIDON | DIRTYON;        //TODO check
-    //page->pte_entryLO &= (~ENTRYLO_PFN_MASK | newIndex << ENTRYLO_PFN_BIT);
+    page->pte_entryLO = frameAddr | VALIDON | DIRTYON;       
 }
 
 
