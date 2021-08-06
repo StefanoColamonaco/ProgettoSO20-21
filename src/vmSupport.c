@@ -129,8 +129,7 @@ void handlePageFault() {
 }
 
 static void handleTLBInvalid(support_t *supp) {
-    //state_t *state = (state_t*) &(supp->sup_exceptState[0]);
-    pteEntry_t *missingPage = getMissingPageVariant(supp);//getMissingPageVariant(state->gpr[CP0_BadVAddr]);  //TODO the page is already in the tlb. We need to grab it from there
+    pteEntry_t *missingPage = getMissingPageVariant(supp); 
     updateFrameIndexToReplace();
     swap_t *frameToReplace = &swapTable[frameIndexToReplace];
 
