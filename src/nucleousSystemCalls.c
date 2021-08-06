@@ -106,7 +106,7 @@ void create_Process()
 		insertChild(currentProcess, tmp);
 		currentProcess->p_s.reg_v0 = 0; //OK, process created correctly
 	}
-	contextSwitch(currentProcess);
+	loadProcess(currentProcess);
 }
 
 static void terminate_Process_rec(pcb_t *current);
@@ -153,7 +153,7 @@ void passeren()
 	}
 	else
 	{
-		contextSwitch(currentProcess);
+		loadProcess(currentProcess);
 	}
 }
 
@@ -167,7 +167,7 @@ void verhogen()
 	{
 		insertProcQ(&readyQueue, tmp);
 	}
-	contextSwitch(currentProcess);
+	loadProcess(currentProcess);
 }
 
 /*
@@ -194,7 +194,7 @@ void get_Cpu_Time()
 	currentProcess->p_time = currentProcess->p_time + (stopT - startT);
 	currentProcess->p_s.reg_v0 = currentProcess->p_time;
 	startT = stopT;
-	contextSwitch(currentProcess);
+	loadProcess(currentProcess);
 }
 
 /* allows the invoking process to wait for a spin of the interval timer (next device tick) */
@@ -207,14 +207,14 @@ void wait_For_Clock()
 		blockCurrentProcessAt(&clockSemaphore);
 		scheduler();
 	}
-	contextSwitch(currentProcess);
+	loadProcess(currentProcess);
 }
 
 /* Returns a pointer to the support structure of the current process */
 void get_support_data()
 {
 	currentProcess->p_s.reg_v0 = (unsigned int)currentProcess->p_supportStruct;
-	contextSwitch(currentProcess);
+	loadProcess(currentProcess);
 }
 
 /*function that add current process to the semaphore's associated list of blocked pcbs*/

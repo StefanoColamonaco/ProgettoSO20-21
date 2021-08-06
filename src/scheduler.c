@@ -17,7 +17,7 @@ void scheduler()
 	pcb_t *p = removeProcQ(&readyQueue);
 	if (p != NULL)
 	{
-		prepareSwitch(p, TIMESLICE);
+		prepareAndSwitch(p, TIMESLICE);
 	}
 
 	if (processCount == 0)
@@ -41,7 +41,7 @@ void scheduler()
 
 /*case the scheduler decides to run another process. In this case we save the current process and call back
 the exception handling function of the Bios (which was provided to us) passing the status of the current process.*/
-void contextSwitch(pcb_t *current)
+void loadProcess(pcb_t *current)
 {
 	currentProcess = current;
 	LDST(&(currentProcess->p_s));
@@ -56,9 +56,9 @@ void setStatusForWaiting()
 }
 
 /*This function handles termination and initialization of process time and executes context switch*/
-void prepareSwitch(pcb_t *p, int time)
+void prepareAndSwitch(pcb_t *p, int time)
 {
 	STCK(startT);
 	setTIMER(time);
-	contextSwitch(p);
+	loadProcess(p);
 }

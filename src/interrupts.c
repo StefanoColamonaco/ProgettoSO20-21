@@ -76,7 +76,7 @@ void handleInterrupts() {
     if(currentProcess != NULL){
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
         copyState((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
-        prepareSwitch(currentProcess, timeLeft);
+        prepareAndSwitch(currentProcess, timeLeft);
     }
 }
 
@@ -130,7 +130,7 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     if(currentProcess == NULL){
         scheduler();
     } else {
-        contextSwitch(currentProcess);
+        loadProcess(currentProcess);
     }
 }
 
