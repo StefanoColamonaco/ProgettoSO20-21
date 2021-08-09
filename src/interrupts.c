@@ -39,51 +39,49 @@ static inline unsigned int getTermStatus(termreg_t*dev);
 
 
 void handleInterrupts() {
-    STCK(stopT);
-    unsigned int cause = getCAUSE();
     int timeLeft = getTIMER();
+    unsigned int cause = getCAUSE();
+    STCK(stopT);
 
-    while ((cause & CAUSE_IP_MASK) != 0) {  //check for pending interrupts
+    if ((cause & CAUSE_IP_MASK) != 0) {  //check for pending interrupts
+
         if (cause & CAUSE_IP(PLTINT)){
             handlePLTInterrupt(stopT);
-        }
-
+        } 
         else if (cause & CAUSE_IP(INTERTIMEINT)){
             handleIntervalTimerInterrupt();
         }
-
         else if (cause & CAUSE_IP(DISKINT)) {
             handleDeviceInterrupt(DISKINT);
         }
-
         else if (cause & CAUSE_IP(FLASHINT)) {
             handleDeviceInterrupt(FLASHINT);
         }
-
         else if (cause & CAUSE_IP(NETWINT)) {
             handleDeviceInterrupt(NETWINT);
         }
-
         else if (cause & CAUSE_IP(PRNTINT)) {
             handleDeviceInterrupt(PRNTINT);
         }
-
         else if (cause & CAUSE_IP(TERMINT)) {
             handleDeviceInterrupt(TERMINT);
         }
-        cause = getCAUSE();
     }
-    if(currentProcess != NULL){
+
+    if (currentProcess != NULL) {
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
         copyState((state_t*) BIOSDATAPAGE, &(currentProcess -> p_s));
         prepareAndSwitch(currentProcess, timeLeft);
+    } else {
+        scheduler();
     }
 }
 
+//TODO refactor repeated code
 void handlePLTInterrupt(int stopT) {
     if(currentProcess != NULL){
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
-        copyState(((state_t*)BIOSDATAPAGE), &(currentProcess -> p_s));
+        copyState((state_t*)BIOSDATAPAGE, &(currentProcess -> p_s));
         insertProcQ(&readyQueue, currentProcess);
         scheduler();
     } else {
@@ -100,38 +98,27 @@ void handleIntervalTimerInterrupt() {
         tmp = removeBlocked(&clockSemaphore);
     }
     clockSemaphore = 0;
-    if(currentProcess == NULL){
-        scheduler();
-    }
+
 }
 
-int recv;
-int both;
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
     devreg_t *dev = (devreg_t*)DEV_REG_ADDR(interruptLine, deviceNo);
     unsigned int savedStatus = 0;
-    recv = 0;
-    both = 0;
+    int recv = 0;
 
     if (interruptLine == TERMINT) {
+        recv = terminalIsRECV(dev->term);
         savedStatus = getTermStatus(&dev->term);
         acknowledgeTermInterrupt(&dev->term);
     } else {
         savedStatus = dev->dtp.status;
         acknowledgeDTPInterrupt(&dev->dtp);
     }
-    if(both) {
-        releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, 1), savedStatus);
-    }
     releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, recv), savedStatus);
+
     startT = getTIMER();
-    if(currentProcess == NULL){
-        scheduler();
-    } else {
-        loadProcess(currentProcess);
-    }
 }
 
 unsigned int getDeviceNoFromLine(unsigned int interruptLine) {
@@ -163,20 +150,11 @@ static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
 }
 
 static void acknowledgeTermInterrupt(termreg_t *dev) {
-    if(dev->recv_status != READY && dev->transm_status != READY){
-        
+    if(terminalIsRECV(*dev)) {
         dev->recv_command = ACK;
+    } else {
         dev->transm_command = ACK;
-        both = 1;
-    }else{
-        if(terminalIsRECV(*dev)) {
-            dev->recv_command = ACK;
-            recv = 1;
-        } else {
-            dev->transm_command = ACK;
-        }
     }
-    
 }
 
 /*check if terminal is RECV or TRANSM and returns the status accordingly*/
