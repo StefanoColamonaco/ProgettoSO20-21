@@ -72,6 +72,8 @@ void passupOrDie(int exceptionType){
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].status,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].pc);
     }
+    else {
+        SYSCALL(TERMPROCESS,0,0,0);
+    }
 
-    SYSCALL(TERMPROCESS,0,0,0);
 }
