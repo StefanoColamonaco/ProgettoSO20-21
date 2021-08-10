@@ -14,14 +14,12 @@
 #include <umps3/umps/types.h>
 #include <umps3/umps/const.h>
 
-state_t *excState;
-support_t *supp;
 
-void handleSupportSystemcalls(support_t *support)
+void handleSupportSystemcalls(support_t *supp)
 {
-	excState = (state_t*) &(support->sup_exceptState[GENERALEXCEPT]);
+	state_t *excState = (state_t*) &(supp->sup_exceptState[GENERALEXCEPT]);
 	int currentSyscall = excState->reg_a0;
-	supp = support;
+	//supp = support;
 
 	switch (currentSyscall)
 	{
@@ -34,22 +32,22 @@ void handleSupportSystemcalls(support_t *support)
 	}
 	case GET_TOD:
 	{
-		get_TOD();
+		get_TOD(excState);
 		break;
 	}
 	case WRITEPRINTER:
 	{
-		write_To_Printer();
+		write_To_Printer(supp, excState);
 		break;
 	}
 	case WRITETERMINAL:
 	{
-		write_To_Terminal();
+		write_To_Terminal(supp, excState);
 		break;
 	}
 	case READTERMINAL:
 	{
-		read_From_Terminal();
+		read_From_Terminal(supp, excState);
 		break;
 	}
 	}
@@ -63,7 +61,7 @@ void terminate_support()
 }
 
 /* Returns the number of microseconds from system power on */
-void get_TOD()
+void get_TOD(state_t *excState)
 {
 	cpu_t stopT;
 	STCK(stopT);
@@ -72,9 +70,8 @@ void get_TOD()
 }
 
 /* system call that manages the printing of an entire string passed as argument*/
-void write_To_Printer()
+void write_To_Printer(support_t* supp, state_t *excState)
 {
-
 	char *virtAddr = (char *)(excState->reg_a1);
 	int strlen = excState->reg_a2;
 	int retValue = 0;
@@ -117,7 +114,7 @@ void write_To_Printer()
 	LDST(excState);
 }
 
-void write_To_Terminal()
+void write_To_Terminal(support_t* supp, state_t *excState)
 {
 	char *virtAddr = (char *)(excState->reg_a1);
 	int strlen = excState->reg_a2;
@@ -158,7 +155,7 @@ void write_To_Terminal()
 }
 
 
-void read_From_Terminal()
+void read_From_Terminal(support_t* supp, state_t *excState)
 {
 	char *virtAddr = (char*)(excState->reg_a1);
 	if (virtAddr < (char *)UPROCSTARTADDR)
