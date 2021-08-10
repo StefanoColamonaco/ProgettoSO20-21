@@ -37,13 +37,13 @@ void uTLB_RefillHandler () {
     setINDEX(tlbIndex << INDEXSHIFT);
 	TLBWI();    //TODO replace with TLBWI() after a replacing algorithm is implemented
     updateTLBIndex();	
-	loadProcess(currentProcess);
-    //LDST((state_t*)BIOSDATAPAGE);
+    loadProcess(currentProcess);
+    //LDST(&currentProcess->p_supportStruct->sup_exceptState[0]); //non capisco perchè non va
 }
 
-pteEntry_t *getMissingPageVariant(support_t* supp) {      //TODO add GETSUPP so we can use this in level 3
+pteEntry_t *getMissingPageVariant(support_t* supp) {
     pteEntry_t *pageTable = supp->sup_privatePgTbl;
-    state_t* saved_state = &supp->sup_exceptState[0];
+    state_t* saved_state = &supp->sup_exceptState[PGFAULTEXCEPT];
     unsigned int badVAddr = ENTRYHI_GET_VPN(saved_state->entry_hi);
     for (int i = 0; i < MAXPAGES; i++) {
         if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
@@ -58,8 +58,6 @@ pteEntry_t *getMissingPageVariant(support_t* supp) {      //TODO add GETSUPP so 
 
 pteEntry_t *getMissingPage() {      //TODO add GETSUPP so we can use this in level 3
     unsigned int badVAddr = getBADVADDR();
-    // unsigned int savedEntryHI = ((state_t*)BIOSDATAPAGE)->entry_hi;
-    // unsigned int badVAddr = ENTRYHI_GET_VPN(savedEntryHI);
     pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
     for (int i = 0; i < MAXPAGES; i++) {
         if ( ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == ENTRYHI_GET_VPN(badVAddr)) {

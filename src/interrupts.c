@@ -101,7 +101,6 @@ void handleIntervalTimerInterrupt() {
 
 }
 
-int semIndexTest;
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
@@ -118,7 +117,6 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
         acknowledgeDTPInterrupt(&dev->dtp);
     }
     int semIndex = getSemIndex(interruptLine, deviceNo, recv);
-    semIndexTest = semIndex;
     releaseSemAndUpdateStatus(semIndex, savedStatus);
 
     startT = getTIMER();
