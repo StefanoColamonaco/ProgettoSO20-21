@@ -32,7 +32,7 @@ static inline void acknowledgeDTPInterrupt(dtpreg_t *dev);
 
 static inline void acknowledgeTermInterrupt(termreg_t *dev);
 
-static inline int terminalIsRECV(termreg_t dev);
+static inline int terminalIsRECV(termreg_t *dev);
 
 static inline unsigned int getTermStatus(termreg_t*dev);
 
@@ -101,6 +101,7 @@ void handleIntervalTimerInterrupt() {
 
 }
 
+int semIndexTest;
 
 void handleDeviceInterrupt(unsigned int interruptLine) {
     unsigned int deviceNo = getDeviceNoFromLine(interruptLine);
@@ -109,14 +110,16 @@ void handleDeviceInterrupt(unsigned int interruptLine) {
     int recv = 0;
 
     if (interruptLine == TERMINT) {
-        recv = terminalIsRECV(dev->term);
+        recv = terminalIsRECV(&dev->term);
         savedStatus = getTermStatus(&dev->term);
         acknowledgeTermInterrupt(&dev->term);
     } else {
         savedStatus = dev->dtp.status;
         acknowledgeDTPInterrupt(&dev->dtp);
     }
-    releaseSemAndUpdateStatus(getSemIndex(interruptLine, deviceNo, recv), savedStatus);
+    int semIndex = getSemIndex(interruptLine, deviceNo, recv);
+    semIndexTest = semIndex;
+    releaseSemAndUpdateStatus(semIndex, savedStatus);
 
     startT = getTIMER();
 }
@@ -150,7 +153,7 @@ static void acknowledgeDTPInterrupt(dtpreg_t *dev) {
 }
 
 static void acknowledgeTermInterrupt(termreg_t *dev) {
-    if(terminalIsRECV(*dev)) {
+    if(terminalIsRECV(dev)) {
         dev->recv_command = ACK;
     } else {
         dev->transm_command = ACK;
@@ -159,7 +162,7 @@ static void acknowledgeTermInterrupt(termreg_t *dev) {
 
 /*check if terminal is RECV or TRANSM and returns the status accordingly*/
 static inline unsigned int getTermStatus(termreg_t* dev) {
-    if (terminalIsRECV(*dev)) {
+    if (terminalIsRECV(dev)) {
         return dev->recv_status;
     } else {
         return dev->transm_status;
@@ -174,7 +177,7 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
     
     case DISKINT:
     case FLASHINT:
-        return (interruptLine - DISKINT)*8 + deviceNo;
+        //return (interruptLine - DISKINT)*8 + deviceNo;
     case NETWINT:
     case PRNTINT:
         return (interruptLine - DISKINT)*8 + deviceNo;
@@ -193,8 +196,8 @@ unsigned int getSemIndex(unsigned int interruptLine, unsigned int deviceNo, int 
 }
 
 
-static int terminalIsRECV(termreg_t dev) {
-    return dev.recv_status != READY;
+static int terminalIsRECV(termreg_t *dev) {
+    return dev->recv_status != READY;
 }
 
 
