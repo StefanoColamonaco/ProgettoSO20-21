@@ -39,7 +39,7 @@ int procNum = 8;
 void test_phase_3() {
 	initSwapStructs();
 	initDevSemaphores();
-	setSwapFloor();
+	//setSwapFloor();
 	masterSem = 0;
 	initUProcs();
 	startUProcs();
@@ -65,7 +65,7 @@ void initUProcs() {
 		int asid = i+1;//getFreeAsid();
 		init_uproc_state(asid);
 		init_uproc_support(asid);
-		markReadOnlyPages(&uproc_supp[asid]);
+		//markReadOnlyPages(&uproc_supp[asid]);
 	}
 }
 
@@ -84,8 +84,10 @@ static void init_uproc_support(int asid) {
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleSupportLevelExceptions; 
 	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].status = TEBITON | IECON; //local timer and interrupts enabled, kernel mode by default
 	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
-	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackGen[499]);
+	memaddr ramTop;
+	RAMTOP(ramTop);
+	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = ramTop - (asid * 2) * PAGESIZE;	//stack grown downward
+	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = ramTop - (asid * 2 + 1) * PAGESIZE;
 	init_uproc_pagetable(&uproc_supp[asid]);
 }
 
