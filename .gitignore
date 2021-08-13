@@ -13,3 +13,4 @@ kernel
 kernel.core.umps
 kernel.stab.umps
 .vscode/
+src/resources/phase3Config
