@@ -5,10 +5,10 @@
 
 void scheduler();
 
-void loadProcess(pcb_t *current);     
+void loadProcess(pcb_t *current);
 
 void setStatusForWaiting();
 
-void prepareAndSwitch(pcb_t *p, int time);
+void updateTimeAndSwitch(pcb_t *p, int time);
 
 #endif

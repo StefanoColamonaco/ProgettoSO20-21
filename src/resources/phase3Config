@@ -1,11 +1,15 @@
 {
     "boot": {
-        "core-file": "kernel.core.umps",
+        "core-file": "/home/dreac/vscodeProjects/ProgettoSO20-21/kernel.core.umps",
         "load-core-file": true
     },
     "bootstrap-rom": "/usr/share/umps3/coreboot.rom.umps",
     "clock-rate": 1,
     "devices": {
+        "disk0": {
+            "enabled": false,
+            "file": "/home/dreac/vscodeProjects/ProgettoSO20-21/src/resources/testers/fibEight.t.aout.umps"
+        },
         "flash0": {
             "enabled": true,
             "file": "testers/strConcat.umps"
@@ -108,7 +112,7 @@
     "num-ram-frames": 128,
     "symbol-table": {
         "asid": 64,
-        "file": "kernel.stab.umps"
+        "file": "/home/dreac/vscodeProjects/ProgettoSO20-21/kernel.stab.umps"
     },
     "tlb-floor-address": "0x80000000",
     "tlb-size": 16

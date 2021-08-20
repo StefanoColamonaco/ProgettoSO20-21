@@ -18,9 +18,11 @@
 
 /*Handler for exceptions*/
 /*Linked through the passupvector*/
-void handleExceptions() {
+void handleExceptions()
+{
     unsigned int cause = getCAUSE();
     unsigned int excCode = CAUSE_GET_EXCCODE(cause);
+
     switch (excCode) {
         case EXC_INT:
             handleInterrupts();
@@ -53,7 +55,8 @@ void handleExceptions() {
     }
 }
 
-void TLBExceptionHandler() {
+void TLBExceptionHandler()
+{
     passupOrDie(PGFAULTEXCEPT);
 }
 
@@ -65,15 +68,15 @@ system call was raised and we give control to the BIOS exceptions handler
 */
 
 
-void passupOrDie(int exceptionType){
-    if(currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0){                            
+void passupOrDie(int exceptionType)
+{
+    if (currentProcess -> p_supportStruct != NULL && currentProcess -> p_supportStruct != 0) {
         copyState((state_t *) BIOSDATAPAGE, &(currentProcess -> p_supportStruct -> sup_exceptState[exceptionType]));
         LDCXT(currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].stackPtr,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].status,
             currentProcess -> p_supportStruct -> sup_exceptContext[exceptionType].pc);
-    }
-    else {
-        SYSCALL(TERMPROCESS,0,0,0);
+    } else {
+        SYSCALL(TERMPROCESS, 0, 0, 0);
     }
 
 }
