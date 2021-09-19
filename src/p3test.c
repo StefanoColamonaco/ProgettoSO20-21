@@ -24,8 +24,6 @@ static void initDevSemaphores();
 
 static void initUProcs();
 
-//static void startUProcs();
-
 static void waitForUprocs();
 
 static void init_uproc_state(int asid);
@@ -34,8 +32,6 @@ static void init_uproc_support(support_t* supp);
 
 static void initSuppStack();
 
-// ATTENZIONE, VARIABILE DA SOSTITUIRE CON UPROCMAX IN TUTTO IL FILE:
-int procNum = 8;
 
 void test_phase_3()
 {
@@ -65,7 +61,7 @@ static void initDevSemaphores()
 
 void initUProcs()
 {
-    for (int i = 0; i < procNum; i++) {
+    for (int i = 0; i < UPROCMAX; i++) {
         support_t* supp = alloc_supp();
         supp->sup_asid = i + 1;
         init_uproc_support(supp);
@@ -98,17 +94,9 @@ static void init_uproc_support(support_t* supp)
     init_uproc_pagetable(supp);
 }
 
-
-// static void startUProcs() {
-// 	for (int i = 1; i < procNum+1; i++) {
-// 		SYSCALL(1, (unsigned int) &uproc_state, (unsigned int) &uproc_supp[i], 0);
-// 	}
-// }
-
-
 static void waitForUprocs()
 {
-    for (int i = 0; i < procNum; i++) {
+    for (int i = 0; i < UPROCMAX; i++) {
         SYSCALL(PASSEREN, (unsigned int) &masterSem, 0, 0);
     }
 }
@@ -121,7 +109,7 @@ void notifyTerminated()
 
 static void initSuppStack()
 {
-    for (int i = 0; i < procNum; i++) {
+    for (int i = 0; i < UPROCMAX; i++) {
         dealloc_supp(&uproc_supp[i]);
     }
 
