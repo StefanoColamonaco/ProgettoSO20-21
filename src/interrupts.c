@@ -73,6 +73,7 @@ void handleInterrupts()
 //TODO refactor repeated code
 void handlePLTInterrupt(int stopT)
 {
+    setTIMER(5000 * (*((cpu_t *)TIMESCALEADDR)));
     if (currentProcess != NULL) {
         currentProcess -> p_time = currentProcess -> p_time + (stopT - startT);
         copyState((state_t*)BIOSDATAPAGE, &(currentProcess -> p_s));
