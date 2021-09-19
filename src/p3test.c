@@ -4,7 +4,6 @@
 #include <umps3/umps/regdef.h>
 #include <umps3/umps/arch.h>
 #include <umps3/umps/cp0.h>
-#include "print.h"
 
 #include "pcb.h"
 #include "p3test.h"
