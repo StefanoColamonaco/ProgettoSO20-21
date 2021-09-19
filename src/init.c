@@ -24,9 +24,9 @@ int deviceSemaphores[DEVICE_NUM];   //last device is interval time
 
 
 /* Support level semaphores */
-int printerSemaphores[N_DEV_PER_IL+1];
-int termWriteSemaphores[N_DEV_PER_IL+1];
-int termReadSemaphores[N_DEV_PER_IL+1];
+int printerSemaphores[N_DEV_PER_IL + 1];
+int termWriteSemaphores[N_DEV_PER_IL + 1];
+int termReadSemaphores[N_DEV_PER_IL + 1];
 
 
 
@@ -37,8 +37,9 @@ static pcb_t *initFirstProcess();
 static inline void loadIntervalTimer (unsigned int timeInMicroSecs);
 
 
-int main() {
-    initPassupVector();  
+int main()
+{
+    initPassupVector();
     initPcbs();
     initASL();
 
@@ -52,40 +53,44 @@ int main() {
     return 0;
 }
 
-pcb_t *initFirstProcess() {
+pcb_t *initFirstProcess()
+{
     pcb_t *firstProcess = allocPcb();
-    if(firstProcess != NULL) {
+
+    if (firstProcess != NULL) {
         state_t *state = &(firstProcess->p_s);
         state->reg_t9 = (memaddr)test_phase_3;
         state->pc_epc = state->reg_t9;                                 //set PC to test function
         firstProcess->p_s.status = ALLOFF | IECON | IMON | TEBITON;    //set status
         memaddr ramTop;
         RAMTOP(ramTop);
-        state->reg_sp = ramTop;                                        
+        state->reg_sp = ramTop;
 
         firstProcess->p_time = 0;
         firstProcess->p_semAdd = NULL;
         firstProcess->p_supportStruct = NULL;
 
         insertProcQ(&readyQueue, firstProcess);
-        
+
         return firstProcess;
     } else {
         PANIC();
         return NULL;
-    }    
+    }
 }
 
-passupvector_t *initPassupVector() {
+passupvector_t *initPassupVector()
+{
     passupvector_t *toReturn = (passupvector_t*)PASSUPVECTOR;
-    toReturn->tlb_refill_handler = (memaddr)uTLB_RefillHandler; 
+    toReturn->tlb_refill_handler = (memaddr)uTLB_RefillHandler;
     toReturn->tlb_refill_stackPtr = NUCLEUS_STACKPAGE_TOP;
     toReturn->exception_handler = (memaddr)handleExceptions;
     toReturn->exception_stackPtr = NUCLEUS_STACKPAGE_TOP;
     return toReturn;
 }
 
-inline void loadIntervalTimer (unsigned int timeInMicroSecs) {
+inline void loadIntervalTimer (unsigned int timeInMicroSecs)
+{
     LDIT(timeInMicroSecs);
 }
 

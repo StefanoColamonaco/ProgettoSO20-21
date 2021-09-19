@@ -2,7 +2,6 @@
 #define PROGETTOSO20_21_INTERRUPTS_H
 
 
-extern unsigned int old_status;
 
 extern void disable_interrupts();
 

@@ -4,8 +4,16 @@
 ifneq ($(wildcard /usr/bin/umps3),)
 	UMPS3_DIR_PREFIX = /usr
 	LIBDIR = $(UMPS3_DIR_PREFIX)/lib/x86_64-linux-gnu/umps3
+	INCLUDE_PATH = /usr/include
 else
 	UMPS3_DIR_PREFIX = /usr/local
+	LIBDIR = $(UMPS3_DIR_PREFIX)/lib/umps3
+	INCLUDE_PATH = /usr/local/include
+endif
+
+ifneq ($(wildcard $(UMPS3_DIR_PREFIX)/lib/x86_64-linux-gnu),)
+	LIBDIR = $(UMPS3_DIR_PREFIX)/lib/x86_64-linux-gnu/umps3
+else 
 	LIBDIR = $(UMPS3_DIR_PREFIX)/lib/umps3
 endif
 
@@ -27,16 +35,21 @@ AS = mipsel-linux-gnu-as -KPIC
 EF = umps3-elf2umps
 UDEV = umps3-mkdev
 
+testers = printerTest.umps strConcat.umps \
+	fibEight.umps fibEleven.umps \
+	terminalTest2.umps terminalTest3.umps terminalTest4.umps \
+	terminalTest5.umps  \
+
 #main target
 all: printerTest.umps strConcat.umps \
 	fibEight.umps fibEleven.umps \
 	terminalTest2.umps terminalTest3.umps terminalTest4.umps \
 	terminalTest5.umps  \
 
-	
-	
+aout: $(subst umps,t.aout.umps,$(testers))
+
 %.o: %.c $(TDEFS)
-	$(CC) $(CFLAGS) $<
+	$(CC) $(CFLAGS) $< -I$(INCLUDE_PATH)
 	
 %.t: %.o print.o  $(LIBDIR)/crti.o
 	$(LD) $(LDAOUTFLAGS) $(LIBDIR)/crti.o $< print.o $(LIBDIR)/libumps.o -o $@
@@ -46,6 +59,7 @@ all: printerTest.umps strConcat.umps \
 
 %.umps: %.t.aout.umps
 	$(UDEV) -f $@ $<
+
 
 
 clean:

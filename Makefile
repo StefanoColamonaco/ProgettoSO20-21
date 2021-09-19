@@ -18,7 +18,7 @@ LDFLAGS = -G 0 -nostdlib -T$(shell find /usr/ -name umpscore.ldscript 2> /dev/nu
 
 phase1_objs = pcb.o asl.o
 phase2_objs = exceptions.o init.o interrupts.o scheduler.o stateUtil.o nucleousSystemCalls.o
-phase3_objs = vmSupport.o sysSupport.o supportSystemCalls.o
+phase3_objs = vmSupport.o sysSupport.o supportSystemCalls.o initSupp.o
 test_obj = p3test.o
 pandos_headers = pandos_const.h pandos_types.h
 objects = $(addprefix obj/, crtso.o libumps.o $(test_obj) $(phase1_objs) $(phase2_objs) $(phase3_objs))
@@ -29,7 +29,6 @@ all : kernel.core.umps kernel.stab.umps
 
 kernel.core.umps kernel.stab.umps &: kernel
 	umps3-elf2umps -k kernel
-	
 
 kernel : $(objects)
 	$(LD) $(LDFLAGS) -o $@ $^ 
@@ -45,6 +44,9 @@ $(obj_dir)/crtso.o $(obj_dir)/libumps.o : $(obj_dir)/%.o : %.S | $(obj_dir)
 
 $(obj_dir) :
 	mkdir "$(obj_dir)"
+
+aout:
+	umps3-elf2umps -k 
 
 clean:
 	-rm  $(objects) kernel kernel.core.umps kernel.stab.umps 2> /dev/null

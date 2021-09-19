@@ -8,8 +8,10 @@
 .vscode/settings.json
 .swo
 .swp
+.orig
 _phase3Config
 kernel
 kernel.core.umps
 kernel.stab.umps
 .vscode/
+src/resources/phase3Config

@@ -4,107 +4,125 @@
 #include <umps3/umps/regdef.h>
 #include <umps3/umps/arch.h>
 #include <umps3/umps/cp0.h>
-#include "print.h"
 
 #include "pcb.h"
 #include "p3test.h"
 #include "sysSupport.h"
-#include "tests/vmSupportTest.h"
 #include "vmSupport.h"
 #include "init.h"
 #include "exceptions.h"
+#include "initSupp.h"
 
 int masterSem = 0;
 
 
-static state_t uproc_state[UPROCMAX + 1];	//this way we can index directly by ASID. 0 is unused
-static support_t uproc_supp[UPROCMAX + 1];
+static state_t uproc_state;
+static support_t uproc_supp[UPROCMAX + 1]; //this way we can index directly by ASID. 0 is unused
 
 
 static void initDevSemaphores();
 
 static void initUProcs();
 
-static void startUProcs();
+//static void startUProcs();
 
 static void waitForUprocs();
 
 static void init_uproc_state(int asid);
 
-static void init_uproc_support(int asid);
+static void init_uproc_support(support_t* supp);
+
+static void initSuppStack();
 
 // ATTENZIONE, VARIABILE DA SOSTITUIRE CON UPROCMAX IN TUTTO IL FILE:
-int procNum = 3;
+int procNum = 8;
 
-void test_phase_3() {
-	initSwapStructs();
-	initDevSemaphores();
-	setSwapFloor();
-	masterSem = 0;
-	initUProcs();
-	startUProcs();
-	waitForUprocs();
-	SYSCALL(TERMPROCESS, 0, 0, 0);
+void test_phase_3()
+{
+    initSwapStructs();
+    initDevSemaphores();
+    initSuppStack();
+    masterSem = 0;
+    initUProcs();
+    waitForUprocs();
+    SYSCALL(TERMPROCESS, 0, 0, 0);
 }
 
 
-static void initDevSemaphores() {
-    for (int i = 0; i < (DEVICE_NUM); i++){
+static void initDevSemaphores()
+{
+    for (int i = 0; i < (DEVICE_NUM); i++) {
         deviceSemaphores[i] = 1;
     }
-	for (int i = 1; i < N_DEV_PER_IL+1; i++){
+
+    for (int i = 1; i < N_DEV_PER_IL + 1; i++) {
         printerSemaphores[i] = 1;
-		termWriteSemaphores[i] = 1;
-		termReadSemaphores[i] = 1;
+        termWriteSemaphores[i] = 1;
+        termReadSemaphores[i] = 1;
     }
 }
 
 
-void initUProcs() {
-	for (int i = 0; i < procNum; i++) {
-		int asid = i+1;//getFreeAsid();
-		init_uproc_state(asid);
-		init_uproc_support(asid);
-		markReadOnlyPages(&uproc_supp[asid]);
-	}
+void initUProcs()
+{
+    for (int i = 0; i < procNum; i++) {
+        support_t* supp = alloc_supp();
+        supp->sup_asid = i + 1;
+        init_uproc_support(supp);
+        init_uproc_state(supp->sup_asid);
+        SYSCALL(1, (unsigned int) &uproc_state, (unsigned int) supp, 0);
+        //markReadOnlyPages(&uproc_supp[asid]);
+    }
 }
 
 
-static void init_uproc_state(int asid) {
-	uproc_state[asid].pc_epc = 0x800000B0;
-	uproc_state[asid].reg_t9 = 0x800000B0;
-	uproc_state[asid].reg_sp = 0xC0000000;
-	uproc_state[asid].status = IECON | IMON | TEBITON; 
-	uproc_state[asid].entry_hi = asid << ASIDSHIFT;
+static void init_uproc_state(int asid)
+{
+    uproc_state.pc_epc = 0x800000B0;
+    uproc_state.reg_t9 = 0x800000B0;
+    uproc_state.reg_sp = 0xC0000000;
+    uproc_state.status = IECON | IMON | TEBITON;
+    uproc_state.entry_hi = asid << ASIDSHIFT;
 }
 
-static void init_uproc_support(int asid) {
-	uproc_supp[asid].sup_asid = asid;
-	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)handlePageFault; 
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleSupportLevelExceptions; 
-	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].status = TEBITON | IECON; //local timer and interrupts enabled, kernel mode by default
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
-	uproc_supp[asid].sup_exceptContext[PGFAULTEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackTLB[499]);	//stack grown downward
-	uproc_supp[asid].sup_exceptContext[GENERALEXCEPT].stackPtr = (unsigned int) &(uproc_supp[asid].sup_stackGen[499]);
-	init_uproc_pagetable(&uproc_supp[asid]);
-}
-
-
-static void startUProcs() {
-	for (int i = 1; i < procNum+1; i++) {
-		SYSCALL(1, (unsigned int) &uproc_state[i], (unsigned int) &uproc_supp[i], 0);
-	}
+static void init_uproc_support(support_t* supp)
+{
+    supp->sup_exceptContext[PGFAULTEXCEPT].pc = (memaddr)handlePageFault;
+    supp->sup_exceptContext[GENERALEXCEPT].pc = (memaddr)handleSupportLevelExceptions;
+    supp->sup_exceptContext[PGFAULTEXCEPT].status = TEBITON | IECON; //local timer and interrupts enabled, kernel mode by default
+    supp->sup_exceptContext[GENERALEXCEPT].status = TEBITON | IECON;
+    memaddr ramTop;
+    RAMTOP(ramTop);
+    supp->sup_exceptContext[PGFAULTEXCEPT].stackPtr = ramTop - (supp->sup_asid * 2) * PAGESIZE;	//stack grows downward
+    supp->sup_exceptContext[GENERALEXCEPT].stackPtr = ramTop - (supp->sup_asid * 2 + 1) * PAGESIZE;
+    init_uproc_pagetable(supp);
 }
 
 
-static void waitForUprocs() {
-	for (int i = 0; i < procNum; i++)
-	{
-		SYSCALL(PASSEREN, (unsigned int) &masterSem, 0, 0);
-	}
+// static void startUProcs() {
+// 	for (int i = 1; i < procNum+1; i++) {
+// 		SYSCALL(1, (unsigned int) &uproc_state, (unsigned int) &uproc_supp[i], 0);
+// 	}
+// }
+
+
+static void waitForUprocs()
+{
+    for (int i = 0; i < procNum; i++) {
+        SYSCALL(PASSEREN, (unsigned int) &masterSem, 0, 0);
+    }
 }
 
 
-void notifyTerminated() {
-	SYSCALL(VERHOGEN, (unsigned int) &masterSem, 0, 0);
+void notifyTerminated()
+{
+    SYSCALL(VERHOGEN, (unsigned int) &masterSem, 0, 0);
+}
+
+static void initSuppStack()
+{
+    for (int i = 0; i < procNum; i++) {
+        dealloc_supp(&uproc_supp[i]);
+    }
+
 }

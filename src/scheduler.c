@@ -14,51 +14,48 @@
 /*A simple preemptive and round robin scheduler algorithm with time-slice of 5ms*/
 void scheduler()
 {
-	pcb_t *p = removeProcQ(&readyQueue);
-	if (p != NULL)
-	{
-		prepareSwitch(p, TIMESLICE);
-	}
+    pcb_t *p = removeProcQ(&readyQueue);
 
-	if (processCount == 0)
-	{ //no process to execute
-		HALT();
-	}
-	else
-	{
-		if (softBlockedCount > 0)
-		{ //we need to wait for an interrupt from one of the softBlocked processes
-			currentProcess = NULL;
-			setStatusForWaiting();
-			WAIT();
-		}
-		else
-		{ //deadlock
-			PANIC();
-		}
-	}
+    if (p != NULL) {
+        updateTimeAndSwitch(p, TIMESLICE);
+    }
+
+    if (processCount == 0) {
+        //no process to execute
+        HALT();
+    } else {
+        if (softBlockedCount > 0) {
+            //we need to wait for an interrupt from one of the softBlocked processes
+            currentProcess = NULL;
+            setStatusForWaiting();
+            WAIT();
+        } else {
+            //deadlock
+            PANIC();
+        }
+    }
 }
 
 /*case the scheduler decides to run another process. In this case we save the current process and call back
 the exception handling function of the Bios (which was provided to us) passing the status of the current process.*/
-void contextSwitch(pcb_t *current)
+void loadProcess(pcb_t *current)
 {
-	currentProcess = current;
-	LDST(&(currentProcess->p_s));
+    currentProcess = current;
+    LDST(&(currentProcess->p_s));
 }
 
 /*this function creates a new state capable of receiving interrupts during the WAIT phase*/
 void setStatusForWaiting()
 {
-	setTIMER((unsigned int)0xFFFFFFFF);
-	unsigned int newState = ALLOFF | IECON | IMON;
-	setSTATUS(newState);
+    setTIMER((unsigned int)0xFFFFFFFF);
+    unsigned int newState = ALLOFF | IECON | IMON;
+    setSTATUS(newState);
 }
 
 /*This function handles termination and initialization of process time and executes context switch*/
-void prepareSwitch(pcb_t *p, int time)
+void updateTimeAndSwitch(pcb_t *p, int time)
 {
-	STCK(startT);
-	setTIMER(time);
-	contextSwitch(p);
+    STCK(startT);
+    setTIMER(time);
+    loadProcess(p);
 }

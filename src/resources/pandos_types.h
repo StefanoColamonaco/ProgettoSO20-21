@@ -34,10 +34,6 @@ typedef struct support_t {
     state_t    sup_exceptState[2];              /* old state exceptions			*/
     context_t  sup_exceptContext[2];            /* new contexts for passing up	*/
     pteEntry_t sup_privatePgTbl[USERPGTBLSIZE]; /* user page table				*/
-    unsigned int sup_stackTLB[500];
-    unsigned int sup_stackGen[500];
-    struct support_t* next_supp;
-    struct support_t* prev_supp;
 } support_t;
 
 
@@ -70,13 +66,5 @@ typedef struct swap_t {
     int         sw_pageNo; /* page's virt page no.	*/
     pteEntry_t *sw_pte;    /* page's PTE entry.	*/
 } swap_t;
-
-/* semaphore type */
-typedef struct semd_t {
-    struct semd_t *s_next;         /* ptr to next element on queue */
-    int *s_semAdd;                 /* ptr to the semaphore */
-    pcb_PTR s_procQ;                /* ptr to tail of the queue of procs. blocked on this sem. */
-
-} semd_t, *semd_PTR;
 
 #endif
