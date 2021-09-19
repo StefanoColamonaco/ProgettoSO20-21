@@ -65,10 +65,6 @@ int PTEentryIsValid(pteEntry_t *entry);
 
 static void updateSwapTableEntry(swap_t *swapPage, pteEntry_t* pageToAdd);
 
-static int getBlockNum(int entryHI);
-
-static pteEntry_t* getMissingPageFromSavedState();
-
 
 
 
@@ -158,20 +154,6 @@ static void handleTLBInvalid(support_t *supp)
     updateSwapTableEntry(frameToReplace, missingPage);
 
     markValidAndUpdateTLB(missingPage);
-}
-
-
-static pteEntry_t* getMissingPageFromSavedState() {
-    pteEntry_t *pageTable = currentProcess->p_supportStruct->sup_privatePgTbl;
-    state_t* saved_state = &currentProcess->p_supportStruct->sup_exceptState[PGFAULTEXCEPT];
-    unsigned int badVAddr = ENTRYHI_GET_VPN(saved_state->entry_hi);
-    for (int i = 0; i < MAXPAGES; i++) {
-        if (ENTRYHI_GET_VPN(pageTable[i].pte_entryHI) == badVAddr) {
-            return &pageTable[i];
-        }
-    }
-    SYSCALL(TERMPROCESS, 0, 0, 0);
-    return NULL;
 }
 
 
@@ -277,14 +259,6 @@ static void writeFromDevToPool(pteEntry_t *page)
     enable_interrupts();
 }
 
-static int getBlockNum(int entryHI) {
-    unsigned int blockNum = ENTRYHI_GET_VPN(entryHI);
-    if(blockNum == LASTPAGEMASK) {
-        blockNum = MAXPAGES-1;
-    }
-    return blockNum;
-}
-
 
 static void updateSwapTableEntry(swap_t *swapEntry, pteEntry_t* pageToAdd)
 {
@@ -337,23 +311,23 @@ int PTEentryIsValid(pteEntry_t *entry)
 
 
 
-void markReadOnlyPages(support_t *supp)
-{
-    pteEntry_t* header = &supp->sup_privatePgTbl[0];
-    writeFromDevToPool(header);
+// void markReadOnlyPages(support_t *supp)
+// {
+//     pteEntry_t* header = &supp->sup_privatePgTbl[0];
+//     writeFromDevToPool(header);
 
-    unsigned int *text_mem_start = (unsigned int *)FRAMEPOOLSTART + PAGESIZE * (supp->sup_asid - 1) + 0x0004;
-    unsigned int *text_mem_size = (unsigned int *)FRAMEPOOLSTART + PAGESIZE * (supp->sup_asid - 1) + 0x000C;
+//     unsigned int *text_mem_start = (unsigned int *)FRAMEPOOLSTART + PAGESIZE * (supp->sup_asid - 1) + 0x0004;
+//     unsigned int *text_mem_size = (unsigned int *)FRAMEPOOLSTART + PAGESIZE * (supp->sup_asid - 1) + 0x000C;
 
-    for (int i = 0; i < MAXPAGES; i++) {
-        pteEntry_t *page = &supp->sup_privatePgTbl[i];
-        memaddr vpn = ENTRYHI_GET_VPN(page->pte_entryHI);
+//     for (int i = 0; i < MAXPAGES; i++) {
+//         pteEntry_t *page = &supp->sup_privatePgTbl[i];
+//         memaddr vpn = ENTRYHI_GET_VPN(page->pte_entryHI);
 
-        if (vpn < *text_mem_size) {
-            page->pte_entryLO &= ~DIRTYON;
-        }
-    }
-}
+//         if (vpn < *text_mem_size) {
+//             page->pte_entryLO &= ~DIRTYON;
+//         }
+//     }
+// }
 
 
 void setSwapFloor()
