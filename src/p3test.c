@@ -109,8 +109,8 @@ void notifyTerminated()
 
 static void initSuppStack()
 {
-    for (int i = 0; i < procNum; i++) {
-        dealloc_supp(&uproc_supp[i + 1]);
+    for (int i = 0; i < UPROCMAX; i++) {
+        dealloc_supp(&uproc_supp[i]);
     }
 
 }

@@ -18,8 +18,12 @@ support_t* alloc_supp()
     }
 
     support_t* supp = freeSupp_tp;
-    freeSupp_tp = freeSupp_tp->prev_supp;
-    freeSupp_tp->next_supp = NULL;
+    if (supp->prev_supp != NULL) {
+        freeSupp_tp = freeSupp_tp->prev_supp;
+        freeSupp_tp->next_supp = NULL;
+    } else {
+        freeSupp_tp = NULL;
+    }
 
     supp->next_supp = supp->prev_supp = NULL;
 
