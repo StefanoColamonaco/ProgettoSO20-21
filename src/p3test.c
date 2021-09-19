@@ -71,7 +71,6 @@ void initUProcs()
         init_uproc_support(supp);
         init_uproc_state(supp->sup_asid);
         SYSCALL(1, (unsigned int) &uproc_state, (unsigned int) supp, 0);
-        //markReadOnlyPages(&uproc_supp[asid]);
     }
 }
 
@@ -99,13 +98,6 @@ static void init_uproc_support(support_t* supp)
 }
 
 
-// static void startUProcs() {
-// 	for (int i = 1; i < procNum+1; i++) {
-// 		SYSCALL(1, (unsigned int) &uproc_state, (unsigned int) &uproc_supp[i], 0);
-// 	}
-// }
-
-
 static void waitForUprocs()
 {
     for (int i = 0; i < procNum; i++) {
@@ -119,10 +111,11 @@ void notifyTerminated()
     SYSCALL(VERHOGEN, (unsigned int) &masterSem, 0, 0);
 }
 
+
 static void initSuppStack()
 {
     for (int i = 0; i < procNum; i++) {
-        dealloc_supp(&uproc_supp[i]);
+        dealloc_supp(&uproc_supp[i + 1]);
     }
 
 }
